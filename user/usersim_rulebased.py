@@ -17,7 +17,6 @@ class RulebasedUsersim(Usersim):
     def get_action(self, agent_action):
         return super().get_action(agent_action)
 
-    # FIXME: Currently agent starts first
     def get_start_action(self):
         """ Randomly samples a start action based on user goal """
 

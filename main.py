@@ -59,8 +59,6 @@ class Chatbot:
 
                 self.agent.update(prev_observation, prev_agent_action, observation, reward, done,
                                   warm_up=warm_up, replay=replay)
-                self.user.turn += 1
-                self.agent.turn += 1
                 episode_reward += reward
 
                 agent_action = self.agent.choose_action(observation, warm_up=warm_up)
@@ -109,6 +107,9 @@ class Chatbot:
         self.user.reset()
         # Reset the agent
         self.agent.turn = 0
+        # User start action
+        user_action, _, _, _ = self.user.get_action(None)
+        self.state_tracker.update_state_user(user_action)
 
 
 if __name__ == "__main__":

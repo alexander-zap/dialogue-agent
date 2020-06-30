@@ -72,6 +72,7 @@ class DQNAgent(Agent):
         else:
             action = self.get_greedy_action(obs)
         action.round_num = self.turn
+        self.turn += 1
         return action
 
     def get_greedy_action(self, obs):

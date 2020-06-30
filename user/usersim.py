@@ -47,7 +47,12 @@ class Usersim(ABC):
         return sample_goal
 
     def get_action(self, agent_action):
-        return self.get_next_action(agent_action)
+        if self.turn == 0:
+            action = self.get_start_action()
+        else:
+            action = self.get_next_action(agent_action)
+        self.turn += 1
+        return action
 
     def add_inform_to_action(self, inform_slot, custom_inform_value=None):
         if custom_inform_value:
