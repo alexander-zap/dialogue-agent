@@ -1,3 +1,4 @@
+import copy
 import random
 import numpy as np
 from dialog_config import all_intents, all_slots, max_round_num
@@ -18,15 +19,29 @@ class StateTracker:
         self.history = []
         self.round_num = 0
 
-    # TODO: Outsource the retrieval of the slot values to different method
     # Update history and current informs of the state tracker with the input user action
     def update_state_agent(self, agent_action: AgentAction):
+        # Fill the informs lots of the action by querying the database
+        agent_action = self.fill_agent_action(agent_action)
+        if agent_action.intent == 'inform':
+            for slot in agent_action.inform_slots:
+                # Update the current informs with the chosen agent inform slots
+                self.current_informs[slot] = agent_action.inform_slots[slot]
+        elif agent_action.intent == 'match_found':
+            # Update the value of ticket in current informs with the new value found in the database
+            # Do not update other current_informs with agent_action inform slots, since they are from the full ticket
+            self.current_informs['ticket'] = agent_action.inform_slots['ticket']
+        agent_action.round_num = self.round_num
+        # Add action to history
+        self.history.append(agent_action)
+        self.round_num += 1
+
+    def fill_agent_action(self, agent_action):
         if agent_action.intent == 'inform':
             for slot in agent_action.inform_slots:
                 # Fill the inform slot of the action by querying the database with the current informs as constraints
+                # TODO: Contrary to the documentation agent_actions can contain multiple slots?
                 agent_action.inform_slots[slot] = self.db_helper.get_best_slot_value(slot, self.current_informs)
-                # Update the current informs with the chosen agent inform slots
-                self.current_informs[slot] = agent_action.inform_slots[slot]
         elif agent_action.intent == 'match_found':
             # Get all tickets from the database which match the current informs
             db_results = self.db_helper.get_matching_db_entries(self.current_informs)
@@ -35,18 +50,12 @@ class StateTracker:
             if db_results:
                 # Pick random entry from the dict
                 db_id, inform_slots = random.choice(list(db_results.items()))
-                agent_action.inform_slots = inform_slots
+                agent_action.inform_slots = copy.deepcopy(inform_slots)
                 agent_action.inform_slots['ticket'] = str(db_id)
             # Else set the value of the ticket-slot to ‘no match available’
             else:
                 agent_action.inform_slots['ticket'] = 'no match available'
-            # Update the value of ticket in current informs with the new value found above
-            self.current_informs['ticket'] = agent_action.inform_slots['ticket']
-
-        agent_action.round_num = self.round_num
-        # Add to history
-        self.history.append(agent_action)
-        self.round_num += 1
+        return agent_action
 
     # Update history and current informs of the state tracker with the input user action
     def update_state_user(self, user_action: UserAction):
@@ -57,8 +66,10 @@ class StateTracker:
     def get_state(self, done=False):
         # If done then fill state with zeros
         if done:
+            # TODO: Wouldn't it be better to one-hot encode the "done" in the intent representation?
             return np.zeros(self.state_size()).reshape(1, -1)
 
+        # TODO: History is only represented by last two actions
         last_user_action = self.history[-1] if len(self.history) > 0 else None
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
 
