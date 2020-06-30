@@ -8,10 +8,8 @@ from state_tracker import StateTracker
 
 
 class Chatbot:
-    def __init__(self):
 
-        # Load dict of possible slot values for every slot type (from movie_dict.txt)
-        movie_dict = json.load(open("resources/movie_dict.json", "r", encoding="utf-8"))
+    def __init__(self):
         # Load database of movies
         database = pickle.load(open("resources/movie_db.pkl", "rb"), encoding="latin1")
 
@@ -30,8 +28,10 @@ class Chatbot:
         """
         Runs the loop that trains the agent.
 
-        Trains the agent on the goal-oriented chatbot task. Training of the agent's neural network occurs every episode that
-        TRAIN_FREQ is a multiple of. Terminates when the episode reaches NUM_EP_TRAIN.
+        Trains the agent on the goal-oriented chatbot task (except warm_up, which fills memory with rule-based behavior)
+        Training of the agent's neural network occurs every episode that step_size is a multiple of.
+        Replay memory is flushed every time a best success rate is recorded, starting with success_rate_threshold.
+        Terminates when the episode reaches n_episodes.
 
         """
 
@@ -41,38 +41,37 @@ class Chatbot:
 
         for episode in range(n_episodes):
 
-            self.episode_reset()
             # print("########################\n------ EPISODE {} ------\n########################".format(episode))
+            self.episode_reset()
             done = False
-            success = 0
+            success = False
             episode_reward = 0
-
             replay = episode % self.agent.replay_iter == 0
+
+            # Initialize episode with first user and agent action
             prev_observation = self.state_tracker.get_state()
-            # 1) Agent takes action given state tracker's representation of dialogue (state)
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
-                # 2) 3) 4) 5) 6)
-                # print("--- Round {} ---".format(prev_agent_action.round_num))
                 # print(prev_agent_action)
+                # 2) 3) 4) 5) 6)
                 observation, reward, done, success = self.env_step(prev_agent_action)
-
                 self.agent.update(prev_observation, prev_agent_action, observation, reward, done,
                                   warm_up=warm_up, replay=replay)
-                episode_reward += reward
-
+                # 1) Agent takes action given state tracker's representation of dialogue (observation)
                 agent_action = self.agent.choose_action(observation, warm_up=warm_up)
+
+                episode_reward += reward
+                replay = False
                 prev_observation = observation
                 prev_agent_action = agent_action
-                replay = False
 
             if not warm_up:
                 self.agent.end_episode(n_episodes)
+
             # Evaluation
+            # print("--- Episode: {} SUCCESS: {} REWARD: {} ---".format(episode, success, episode_reward))
             batch_episode_rewards.append(episode_reward)
             batch_successes.append(success)
-            # print("--- Episode {} End: Success {} ---".format(episode, success))
-
             if episode % step_size == 0:
                 # Check success rate
                 success_rate = mean(batch_successes)
@@ -109,6 +108,7 @@ class Chatbot:
         self.agent.turn = 0
         # User start action
         user_action, _, _, _ = self.user.get_action(None)
+        # print(user_action)
         self.state_tracker.update_state_user(user_action)
 
 
