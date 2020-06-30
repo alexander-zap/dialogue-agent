@@ -55,7 +55,7 @@ class Usersim(ABC):
         return action
 
     def add_inform_to_action(self, inform_slot, custom_inform_value=None):
-        if custom_inform_value:
+        if custom_inform_value is not None:
             inform_value = custom_inform_value
         else:
             inform_value = self.goal['inform_slots'][inform_slot]
