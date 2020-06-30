@@ -46,13 +46,13 @@ class StateTracker:
         agent_action.round_num = self.round_num
         # Add to history
         self.history.append(agent_action)
+        self.round_num += 1
 
     # Update history and current informs of the state tracker with the input user action
     def update_state_user(self, user_action: UserAction):
         for key, value in user_action.inform_slots.items():
             self.current_informs[key] = value
         self.history.append(user_action)
-        self.round_num += 1
 
     def get_state(self, done=False):
         # If done then fill state with zeros
@@ -111,7 +111,7 @@ class StateTracker:
         turn_rep = np.zeros((1,)) + self.round_num / 5.
 
         # One-hot representation of the round num
-        turn_one_hot_rep = np.zeros((max_round_num + 1,))
+        turn_one_hot_rep = np.zeros((max_round_num,))
         turn_one_hot_rep[self.round_num] = 1.0
 
         # TODO: No separate representation for number of full matches?
@@ -140,7 +140,7 @@ class StateTracker:
 
     @staticmethod
     def state_size():
-        return 2 * len(all_intents) + 7 * len(all_slots) + 3 + max_round_num + 1
+        return 2 * len(all_intents) + 7 * len(all_slots) + 3 + max_round_num
 
 
 
