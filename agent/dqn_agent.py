@@ -45,8 +45,7 @@ class DQNAgent(Agent):
             prev_obs_batch = np.array([sample[0][0] for sample in mini_batch])
             obs_batch = np.array([sample[2][0] for sample in mini_batch])
             prev_obs_prediction_batch = self.eval_model.predict(prev_obs_batch)
-            # FIXME: should be target_model
-            obs_prediction_batch = self.eval_model.predict(obs_batch)
+            obs_prediction_batch = self.target_model.predict(obs_batch)
             for i, (prev_obs, prev_act, obs, rew, d) in enumerate(mini_batch):
                 prediction = prev_obs_prediction_batch[i]
                 if not d:

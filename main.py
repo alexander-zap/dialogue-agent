@@ -24,7 +24,7 @@ class Chatbot:
         # Create agent
         self.agent = DQNAgent(alpha=0.001, gamma=0.9, epsilon=0.0, epsilon_min=0.0,
                               n_actions=len(feasible_agent_actions), observation_dim=(StateTracker.state_size()),
-                              batch_size=16, memory_len=500000, replace_target_iter=200, replay_iter=100)
+                              batch_size=16, memory_len=500000, replace_target_iter=1, replay_iter=100)
 
     def run(self, n_episodes, step_size=100, warm_up=False):
         """
