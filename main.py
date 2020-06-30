@@ -10,7 +10,7 @@ from state_tracker import StateTracker
 class Chatbot:
 
     def __init__(self):
-        # Load database of movies
+        # Load database of movies (if you get an error unpickling movie_db.pkl then run pickle_converter.py)
         database = pickle.load(open("resources/movie_db.pkl", "rb"), encoding="latin1")
 
         # Create state tracker

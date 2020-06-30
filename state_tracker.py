@@ -141,7 +141,3 @@ class StateTracker:
     @staticmethod
     def state_size():
         return 2 * len(all_intents) + 7 * len(all_slots) + 3 + max_round_num
-
-
-
-

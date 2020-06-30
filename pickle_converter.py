@@ -1,8 +1,4 @@
-# IMPORTANT NOTE: If you get an error unpickling these files in train and test then run this!
-
-
 def run(orig, dest):
-    content = ''
     outsize = 0
     with open(orig, 'rb') as infile:
         content = infile.read()

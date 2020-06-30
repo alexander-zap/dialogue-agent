@@ -149,7 +149,6 @@ class DBQuery:
         # Count matches of individual slots
         slot_matches = {key: 0 for key in current_informs.keys()}
         for db_id in self.database.keys():
-            all_slots_match = True
             for slot, slot_value in current_informs.items():
                 # Skip if a no query item and all_slots_match stays true
                 if slot in self.no_query:
