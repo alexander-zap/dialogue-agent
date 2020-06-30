@@ -26,7 +26,7 @@ class Chatbot:
                               n_actions=len(feasible_agent_actions), observation_dim=(StateTracker.state_size()),
                               batch_size=16, memory_len=500000, replace_target_iter=1, replay_iter=100)
 
-    def run(self, n_episodes, step_size=100, warm_up=False):
+    def run(self, n_episodes, step_size=100, success_rate_threshold=0.1, warm_up=False):
         """
         Runs the loop that trains the agent.
 
@@ -80,7 +80,7 @@ class Chatbot:
 
                 print('Episode: {} SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                            avg_reward))
-                if success_rate > batch_success_best and not warm_up and episode > 1000:
+                if success_rate > batch_success_best and not warm_up and success_rate > success_rate_threshold:
                     print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                                         avg_reward))
                     batch_success_best = success_rate
