@@ -63,11 +63,11 @@ class RulebasedUsersim(Usersim):
         # End episode if turn maximum is reached
         if self.turn >= max_round_num:
             done = True
-            self.user_action.intent = "done"
+            self.user_action.intent = 'done'
             success = -1
         if agent_intent == "done":
             done = True
-            self.user_action.intent = "done"
+            self.user_action.intent = 'done'
             success = self.evaluate_success()
         elif agent_intent == "inform":
             self.response_inform(agent_action)
@@ -89,14 +89,14 @@ class RulebasedUsersim(Usersim):
 
         reward = reward_function(success)
 
-        if self.user_action.intent == 'inform':
-            # Inform intents do not contain request slots
+        if self.user_action.intent in ['inform', 'reject', 'done']:
+            # Inform, reject and done intents do not contain request slots
             self.request_slots.clear()
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
         return self.user_action, reward, done, success
 
     def response_request(self, agent_action):
-        agent_request_slot = list(agent_action.request_slots)[0]
+        agent_request_slot = agent_action.request_slots[0]
 
         # Case 1): Agent requests a slot which is in the goal inform slots -> Inform agent about requested slot
         if agent_request_slot in self.goal['inform_slots']:
