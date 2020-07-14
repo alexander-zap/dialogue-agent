@@ -4,7 +4,7 @@ from collections import deque
 
 class Agent(ABC):
     def __init__(self, alpha, gamma, epsilon, epsilon_min, n_actions, observation_dim, batch_size, memory_len,
-                 replace_target_iter, replay_iter):
+                 replace_target_iter):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -16,7 +16,6 @@ class Agent(ABC):
         self.batch_size = batch_size
         self.memory = deque(maxlen=memory_len)
         self.replace_target_iter = replace_target_iter
-        self.replay_iter = replay_iter
         self.replay_counter = 0
 
     @abstractmethod
