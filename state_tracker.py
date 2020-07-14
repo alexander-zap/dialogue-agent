@@ -40,7 +40,6 @@ class StateTracker:
         if agent_action.intent == 'inform':
             for slot in agent_action.inform_slots:
                 # Fill the inform slot of the action by querying the database with the current informs as constraints
-                # TODO: Contrary to the documentation agent_actions can contain multiple slots?
                 agent_action.inform_slots[slot] = self.db_helper.get_best_slot_value(slot, self.current_informs)
         elif agent_action.intent == 'match_found':
             # Get all tickets from the database which match the current informs

@@ -2,6 +2,7 @@ from user.usersim import Usersim
 import random
 import copy
 from dialog_config import no_query_slots, max_round_num
+from util_functions import reward_function
 
 
 class RulebasedUsersim(Usersim):
@@ -32,7 +33,6 @@ class RulebasedUsersim(Usersim):
             if len(request_slot_set) > 1:
                 request_slot_set.remove("ticket")
             start_request_slot = random.choice(request_slot_set)
-            # TODO: Request implies "UNK", can request_slots be implemented as list?
             self.request_slots.append(start_request_slot)
         else:
             # If no request slots are in the goal, then this is an inform action
@@ -47,7 +47,7 @@ class RulebasedUsersim(Usersim):
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
         done = False
         success = 0
-        reward = self.reward_function(success)
+        reward = reward_function(success)
         return self.user_action, reward, done, success
 
     def get_next_action(self, agent_action):
@@ -64,12 +64,10 @@ class RulebasedUsersim(Usersim):
         if self.turn >= max_round_num:
             done = True
             self.user_action.intent = "done"
-            self.request_slots.clear()  # TODO: Can't the agent just ignore this field for "wrong" intents?
             success = -1
         if agent_intent == "done":
             done = True
             self.user_action.intent = "done"
-            self.request_slots.clear()
             success = self.evaluate_success()
         elif agent_intent == "inform":
             self.response_inform(agent_action)
@@ -89,28 +87,27 @@ class RulebasedUsersim(Usersim):
 
         # self.corrupt(self.user_action)
 
-        reward = self.reward_function(success)
+        reward = reward_function(success)
 
-        # TODO: Can't request slots be implemented in UserAction alone? Are there cases where request_slots carry over?
+        if self.user_action.intent == 'inform':
+            # Inform intents do not contain request slots
+            self.request_slots.clear()
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
-        return self.user_action, reward, done, success  # TODO: Return RL format [observation(?), reward, done, info]
+        return self.user_action, reward, done, success
 
     def response_request(self, agent_action):
-        agent_request_slot = list(agent_action.request_slots.keys())[0]
+        agent_request_slot = list(agent_action.request_slots)[0]
 
         # Case 1): Agent requests a slot which is in the goal inform slots -> Inform agent about requested slot
         if agent_request_slot in self.goal['inform_slots']:
             # User intent will be inform
             self.user_action.intent = 'inform'
-            # Inform intents do not contain request slots
-            self.request_slots.clear()
             # Add requested slot to inform slot
             self.add_inform_to_action(agent_request_slot)
 
         # Case 2): Agent requests for slot that is in the goal request slots and it has been informed already
         elif agent_request_slot in self.goal['request_slots'] and agent_request_slot in self.history_slots.keys():
             self.user_action.intent = 'inform'
-            self.request_slots.clear()
             # Repeat that has been said before (from history slots)
             self.add_inform_to_action(agent_request_slot, custom_inform_value=self.history_slots[agent_request_slot])
 
@@ -132,7 +129,6 @@ class RulebasedUsersim(Usersim):
         # Case 4): Agent requests for slot that user does not care about (slot not in goal request or inform slots)
         else:
             self.user_action.intent = 'inform'
-            self.request_slots.clear()
             # Reply 'anything' as value for requested inform slot
             self.add_inform_to_action(agent_request_slot, custom_inform_value='anything')
 
@@ -149,7 +145,6 @@ class RulebasedUsersim(Usersim):
         if agent_inform_slot in self.goal['inform_slots'].keys() \
                 and agent_inform_value != self.goal['inform_slots'][agent_inform_slot]:
             self.user_action.intent = 'inform'
-            self.request_slots.clear()
             # return inform slot, add to history slots and remove from rest slots (last step not needed)
             self.add_inform_to_action(agent_inform_slot)
 
@@ -171,7 +166,6 @@ class RulebasedUsersim(Usersim):
                     if slot_value != 'UNK':
                         self.user_action.intent = 'inform'
                         self.add_inform_to_action(slot_key, custom_inform_value=slot_value)
-                        self.request_slots.clear()
                     # Request from rest slots
                     else:
                         self.user_action.intent = 'request'
@@ -180,9 +174,8 @@ class RulebasedUsersim(Usersim):
                 else:
                     self.user_action.intent = 'request'
                     self.request_slots.append("ticket")
-                # Add ticket back to rest slots if it was 'UNK'
-                # TODO: What if not? Do not add back? When is ticket not 'UNK'?
-                if ticket_value == 'UNK':
+                # Add ticket back to rest slots if it was there
+                if ticket_value is not None:
                     self.rest_slots["ticket"] = 'UNK'
 
             # Case 2.c): Nothing to say, respond with thanks
@@ -190,6 +183,7 @@ class RulebasedUsersim(Usersim):
                 self.user_action.intent = 'thanks'
 
     def response_match_found(self, agent_action):
+        # Agent needs to execute a 'match_found' action before a 'done' action to have a chance of "SUCCESS"
         self.constraint_check = "SUCCESS"
 
         # Add the ticket slot to history slots and remove from rest and request slots
@@ -213,12 +207,10 @@ class RulebasedUsersim(Usersim):
 
         if self.constraint_check == "FAIL":
             self.user_action.intent = 'reject'
-            self.request_slots.clear()
         else:
             self.user_action.intent = 'thanks'
 
     def evaluate_success(self):
-        # TODO: Check that a ticket was informed by agent
 
         if self.constraint_check == "FAIL":
             return -1
@@ -228,11 +220,3 @@ class RulebasedUsersim(Usersim):
             return -1
 
         return 1
-
-    def reward_function(self, success):
-        reward = -1
-        if success == 1:
-            reward += 2 * max_round_num
-        elif success == -1:
-            reward -= max_round_num
-        return reward
