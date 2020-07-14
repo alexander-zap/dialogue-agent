@@ -65,10 +65,8 @@ class StateTracker:
     def get_state(self, done=False):
         # If done then fill state with zeros
         if done:
-            # TODO: Wouldn't it be better to one-hot encode the "done" in the intent representation?
             return np.zeros(self.state_size()).reshape(1, -1)
 
-        # TODO: History is only represented by last two actions
         last_user_action = self.history[-1] if len(self.history) > 0 else None
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
 
@@ -124,17 +122,12 @@ class StateTracker:
         turn_one_hot_rep = np.zeros((max_round_num,))
         turn_one_hot_rep[self.round_num] = 1.0
 
-        # TODO: No separate representation for number of full matches?
-
-        # TODO: Why is number of full matches used as "normalization addend" for all slots?
-        # TODO: Why is everything divided by 100?
         # Representation of DB query results (scaled counts)
         kb_count_rep = np.zeros((num_slots + 1,)) + db_results_dict['all_slots'] / 100.
         for key in db_results_dict.keys():
             if key in all_slots:
                 kb_count_rep[all_slots.index(key)] = db_results_dict[key] / 100.
 
-        # TODO: Why is binary check of full matches used as "normalization addend" for all slots?
         # Representation of DB query results (binary)
         kb_binary_rep = np.zeros((num_slots + 1,)) + np.sum(db_results_dict['all_slots'] > 0.)
         for key in db_results_dict.keys():

@@ -17,15 +17,13 @@ feasible_agent_actions = [
    {'intent': 'match_found', 'inform_slots': {}, 'request_slots': []}  # Signals a found match for a ticket
 ]
 
-# TODO: No inform/request/combination with multiple slots possible? How to do this without over-expanding action space?
-
-# add inform slots
+# Add inform slots
 for slot in agent_inform_slots:
     feasible_agent_actions.append({'intent': 'inform',
                                    'inform_slots': {slot: "PLACEHOLDER"},
                                    'request_slots': []})
 
-# add request slots
+# Add request slots
 for slot in agent_request_slots:
     feasible_agent_actions.append({'intent': 'request',
                                    'inform_slots': {},

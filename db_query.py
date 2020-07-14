@@ -85,7 +85,6 @@ class DBQuery:
 
         # This removes the inform we want to fill from the current informs if it is present in the current informs
         # so it can be re-queried
-        # TODO: When would this ever happen? And shouldn't the slot value be consistent to the existing inform then?
         current_informs = copy.deepcopy(current_inform_slots)
         current_informs.pop(inform_slot, None)
 

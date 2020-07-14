@@ -39,7 +39,6 @@ class RulebasedUsersim(Usersim):
             self.user_action.intent = 'inform'
 
         # Add inform slot to start action by sampling one slot from the goal inform slots
-        # TODO: Can be improved to sample multiple slots
         if self.goal['inform_slots']:
             start_inform_slot = random.choice(list(self.goal['inform_slots'].keys()))
             self.add_inform_to_action(start_inform_slot)
