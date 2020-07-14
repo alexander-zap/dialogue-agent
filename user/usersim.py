@@ -11,7 +11,7 @@ class Usersim(ABC):
         self.goal_set = goal_set
         self.goal = {}
         self.history_slots = {}
-        self.request_slots = {}
+        self.request_slots = []
         self.rest_slots = {}
         self.constraint_check = False
         self.user_action = UserAction()
@@ -32,7 +32,7 @@ class Usersim(ABC):
         # Add a "ticket" entry to the request slots of the goal (every user has the goal of requesting a ticket)
         self.goal['request_slots']['ticket'] = 'UNK'
         self.history_slots = {}
-        self.request_slots = {}
+        self.request_slots = []
         self.rest_slots = {}
         # Add the inform and request slots from the goal to the rest slots (slots to be informed/requested) of the user
         self.rest_slots.update(self.goal['inform_slots'])

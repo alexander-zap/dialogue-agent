@@ -93,8 +93,8 @@ class StateTracker:
         # Create bag of request slots representation to represent the current user action
         user_request_slots_rep = np.zeros((num_slots,))
         if last_user_action:
-            for key in last_user_action.request_slots.keys():
-                user_request_slots_rep[all_slots.index(key)] = 1.0
+            for slot in last_user_action.request_slots:
+                user_request_slots_rep[all_slots.index(slot)] = 1.0
 
         # Create bag of current informs representation to represent all current informs
         current_slots_rep = np.zeros((num_slots,))
@@ -115,8 +115,8 @@ class StateTracker:
         # Encode last agent request slots
         agent_request_slots_rep = np.zeros((num_slots,))
         if last_agent_action:
-            for key in last_agent_action.request_slots.keys():
-                agent_request_slots_rep[all_slots.index(key)] = 1.0
+            for slot in last_agent_action.request_slots:
+                agent_request_slots_rep[all_slots.index(slot)] = 1.0
 
         # Value representation of the round num
         turn_rep = np.zeros((1,)) + self.round_num / 5.

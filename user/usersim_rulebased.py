@@ -33,7 +33,7 @@ class RulebasedUsersim(Usersim):
                 request_slot_set.remove("ticket")
             start_request_slot = random.choice(request_slot_set)
             # TODO: Request implies "UNK", can request_slots be implemented as list?
-            self.request_slots[start_request_slot] = 'UNK'
+            self.request_slots.append(start_request_slot)
         else:
             # If no request slots are in the goal, then this is an inform action
             self.user_action.intent = 'inform'
@@ -118,7 +118,7 @@ class RulebasedUsersim(Usersim):
         elif agent_request_slot in self.goal['request_slots'] and agent_request_slot in self.rest_slots.keys():
             self.user_action.intent = 'request'
             self.request_slots.clear()
-            self.request_slots[agent_request_slot] = 'UNK'
+            self.request_slots.append(agent_request_slot)
             # Request for the slot and additionally (if possible) add an inform slot from rest slots
             rest_informs = {}
             for key, value in list(self.rest_slots.items()):
@@ -142,7 +142,8 @@ class RulebasedUsersim(Usersim):
         # Add informed slot by agent to history_slots, remove slot from rest slots and request slots of the user
         self.history_slots[agent_inform_slot] = agent_inform_value
         self.rest_slots.pop(agent_inform_slot, None)
-        self.request_slots.pop(agent_inform_slot, None)
+        if agent_inform_slot in self.request_slots:
+            self.request_slots.remove(agent_inform_slot)
 
         # Case 1): Correct agent if value of agent inform slot does match user goal
         if agent_inform_slot in self.goal['inform_slots'].keys() \
@@ -174,11 +175,11 @@ class RulebasedUsersim(Usersim):
                     # Request from rest slots
                     else:
                         self.user_action.intent = 'request'
-                        self.request_slots[slot_key] = 'UNK'
+                        self.request_slots.append(slot_key)
                 # Nothing left ot request but ticket, so request ticket
                 else:
                     self.user_action.intent = 'request'
-                    self.request_slots["ticket"] = 'UNK'
+                    self.request_slots.append("ticket")
                 # Add ticket back to rest slots if it was 'UNK'
                 # TODO: What if not? Do not add back? When is ticket not 'UNK'?
                 if ticket_value == 'UNK':
@@ -194,7 +195,8 @@ class RulebasedUsersim(Usersim):
         # Add the ticket slot to history slots and remove from rest and request slots
         self.history_slots["ticket"] = str(agent_action.inform_slots["ticket"])
         self.rest_slots.pop("ticket", None)
-        self.request_slots.pop("ticket", None)
+        if "ticket" in self.request_slots:
+            self.request_slots.remove("ticket")
 
         # 1) No match could be found with the user informs
         if agent_action.inform_slots["ticket"] == 'no match available':
