@@ -3,13 +3,14 @@ from collections import deque
 
 
 class Agent(ABC):
-    def __init__(self, alpha, gamma, epsilon, epsilon_min, n_actions, observation_dim, batch_size, memory_len,
-                 replace_target_iter):
+    def __init__(self, alpha, gamma, epsilon, epsilon_min, n_actions, n_ordinals, observation_dim, batch_size,
+                 memory_len, replace_target_iter):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
         self.n_actions = n_actions
+        self.n_ordinals = n_ordinals
         self.input_size = observation_dim
         self.turn = 0
 
