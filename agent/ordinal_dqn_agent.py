@@ -42,12 +42,12 @@ class OrdinalDQNAgent(Agent):
         mini_batch = random.sample(self.memory, self.batch_size)
         x_batch, y_batch = [[] for _ in range(self.n_actions)], [[] for _ in range(self.n_actions)]
         obs_batch = np.array([sample[2][0] for sample in mini_batch])
-        obs_prediction_batch = [target_model.predict(obs_batch) for target_model in self.target_action_nets]
-        borda_scores_batch = self.compute_borda_scores(obs_batch)
+        obs_prediction_batch = [target_model(obs_batch) for target_model in self.target_action_nets]
+        borda_scores_batch = self.compute_measure_of_statistical_superiority(obs_batch)
         for i, (prev_obs, prev_act, obs, ordinal, d) in enumerate(mini_batch):
             if not d:
                 best_act = np.argmax(borda_scores_batch[i])
-                target = self.gamma * obs_prediction_batch[best_act][i]
+                target = self.gamma * np.array(obs_prediction_batch[best_act][i])
                 target[ordinal] += 1
             else:
                 target = np.zeros(self.n_ordinals)
@@ -75,10 +75,11 @@ class OrdinalDQNAgent(Agent):
         self.turn += 1
         return action
 
-    # Computes borda_values for a batch of observations given the ordinal_values
-    def compute_borda_scores(self, obs_batch):
-        obs_prediction_batch = [eval_model.predict(obs_batch) for eval_model in self.eval_action_nets]
-        borda_scores_batch = []
+    # Computes the Borda counts for a batch of observations given the ordinal_values
+    def compute_borda_count(self, obs_batch):
+        # TODO: This call really slows everything down
+        obs_prediction_batch = [eval_model(obs_batch) for eval_model in self.eval_action_nets]
+        borda_counts_batch = []
         for i_sample in range(len(obs_batch)):
             # sum up all ordinal values per action for given observation
             ordinal_value_sum_per_action = np.zeros(self.n_actions)
@@ -89,21 +90,51 @@ class OrdinalDQNAgent(Agent):
                     ordinal_values_per_action[action_a].append(ordinal_value)
             ordinal_values_per_action = np.array(ordinal_values_per_action)
 
-            # count actions whose ordinal value sum is not zero (no comparision possible for actions without ordinal_value)
+            borda_counts = []
+            for action_a in range(self.n_actions):
+                action_score = 0
+                ordinal_values = ordinal_values_per_action[action_a]
+                ordinal_worth = 1.0
+                for ordinal_value in reversed(ordinal_values):
+                    ordinal_probability = ordinal_value / ordinal_value_sum_per_action[action_a]
+                    action_score += ordinal_probability * ordinal_worth
+                    ordinal_worth = ordinal_worth / 2
+                borda_counts.append(action_score)
+            borda_counts_batch.append(borda_counts)
+        return borda_counts_batch
+
+    # Computes the winning probabilities of actions for a batch of observations given the ordinal_values
+    def compute_measure_of_statistical_superiority(self, obs_batch):
+        # TODO: This call really slows everything down
+        obs_prediction_batch = [eval_model(obs_batch) for eval_model in self.eval_action_nets]
+        winning_probabilities_batch = []
+        for i_sample in range(len(obs_batch)):
+            # sum up all ordinal values per action for given observation
+            ordinal_value_sum_per_action = np.zeros(self.n_actions)
+            ordinal_values_per_action = [[] for _ in range(self.n_actions)]
+            for action_a in range(self.n_actions):
+                for ordinal_value in obs_prediction_batch[action_a][i_sample]:
+                    ordinal_value_sum_per_action[action_a] += ordinal_value
+                    ordinal_values_per_action[action_a].append(ordinal_value)
+            ordinal_values_per_action = np.array(ordinal_values_per_action)
+
+            # count actions whose ordinal value sum is not zero
+            # (no comparision possible for actions without ordinal_value)
             non_zero_action_count = np.count_nonzero(ordinal_value_sum_per_action)
             actions_to_compare_count = non_zero_action_count - 1
 
-            borda_scores = []
-            # compute borda_values for action_a (probability that action_a wins against any other action)
+            # compute winning probabilities per action
+            winning_probabilities = []
+            # compute probability for every action_a that action_a wins against any other action
             for action_a in range(self.n_actions):
                 # if action has not yet recorded any ordinal values, action has to be played (set borda_value to 1.0)
                 if ordinal_value_sum_per_action[action_a] == 0:
-                    borda_scores.append(1.0)
+                    winning_probabilities.append(1.0)
                     continue
 
                 if actions_to_compare_count < 1:
                     # set lower than 1.0 (borda_value for zero_actions is 1.0)
-                    borda_scores.append(0.5)
+                    winning_probabilities.append(0.5)
                 else:
                     # over all actions: sum up the probabilities that action_a wins against the given action
                     winning_probability_a_sum = 0
@@ -133,12 +164,12 @@ class OrdinalDQNAgent(Agent):
                                 worse_probability_b += ordinal_probability_b
                             winning_probability_a_sum += winning_probability_a
                     # normalize summed up probabilities with number of actions that have been compared
-                    borda_scores.append(winning_probability_a_sum / actions_to_compare_count)
-            borda_scores_batch.append(borda_scores)
-        return borda_scores_batch
+                    winning_probabilities.append(winning_probability_a_sum / actions_to_compare_count)
+            winning_probabilities_batch.append(winning_probabilities)
+        return winning_probabilities_batch
 
     def get_greedy_action(self, obs):
-        action_index = np.argmax(self.compute_borda_scores([obs])[0])
+        action_index = np.argmax(self.compute_measure_of_statistical_superiority([obs])[0])
         return index_to_agent_action(action_index)
 
     def get_warm_up_action(self):
