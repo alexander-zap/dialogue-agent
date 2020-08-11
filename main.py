@@ -23,7 +23,8 @@ class Chatbot:
         self.agent = OrdinalDQNAgent(alpha=0.001, gamma=0.9, epsilon=0.0, epsilon_min=0.0,
                                      n_actions=len(feasible_agent_actions), n_ordinals=3,
                                      observation_dim=(StateTracker.state_size()),
-                                     batch_size=64, memory_len=500000, replace_target_iter=200)
+                                     batch_size=64, memory_len=500000, replay_iter=100,
+                                     replace_target_iter=200)
 
     def run(self, n_episodes, step_size=100, success_rate_threshold=0.1, warm_up=False):
         """
@@ -39,6 +40,7 @@ class Chatbot:
         batch_episode_rewards = []
         batch_successes = []
         batch_success_best = 0.0
+        step_counter = 0
 
         for episode in range(n_episodes):
 
@@ -52,16 +54,17 @@ class Chatbot:
             prev_observation = self.state_tracker.get_state()
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
+                step_counter += 1
+                replay = step_counter % self.agent.replay_iter == 0
                 # print(prev_agent_action)
                 # 2) 3) 4) 5) 6)
                 observation, reward, done, success = self.env_step(prev_agent_action)
                 self.agent.update(prev_observation, prev_agent_action, observation, reward, done,
-                                  warm_up=warm_up)
+                                  warm_up=warm_up, replay=replay)
                 # 1) Agent takes action given state tracker's representation of dialogue (observation)
                 agent_action = self.agent.choose_action(observation, warm_up=warm_up)
 
                 episode_reward += reward
-                replay = False
                 prev_observation = observation
                 prev_agent_action = agent_action
 
