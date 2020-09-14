@@ -2,8 +2,8 @@ from agent.agent import Agent
 from util_functions import index_to_agent_action, raw_agent_action_to_index
 import random
 import numpy as np
-from keras.models import Sequential
-from keras.layers import Dense
+from keras.models import Sequential, Model
+from keras.layers import Dense, Input
 from keras.optimizers import Adam
 from dialog_config import agent_rule_requests
 
@@ -11,17 +11,30 @@ from dialog_config import agent_rule_requests
 class OrdinalDQNAgent(Agent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.eval_action_nets = [self.build_model() for _ in range(self.n_actions)]
-        self.target_action_nets = [self.build_model() for _ in range(self.n_actions)]
+        self.eval_model = self.build_model()
+        self.target_model = self.build_model(target=True)
 
-    # Creates neural net for DQN
-    def build_model(self):
-        model = Sequential()
-        model.add(Dense(80, input_dim=self.input_size, activation='relu'))
-        # model.add(Dense(20, activation='relu'))
-        model.add(Dense(self.n_ordinals, activation='linear'))
+    # Creates big neural net for DQN
+    def build_model(self, target=False):
+        input_layer = Input(shape=(self.input_size,))
+        hidden_layer_1 = Dense(80, activation='relu')(input_layer)
+        hidden_layer_2 = Dense(20, activation='relu')(hidden_layer_1)
+        action_net_outputs = [self.build_action_net(hidden_layer_2) for _ in range(self.n_actions)]
+        model = Model(inputs=input_layer, outputs=action_net_outputs)
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
+        print(model.summary())
         return model
+
+    # Creates subnet for each action
+    def build_action_net(self, action_net_input):
+        action_net_output = Dense(self.n_ordinals, activation='linear')(action_net_input)
+        return action_net_output
+
+    def predict(self, obs_batch, target=False):
+        if target:
+            return self.target_model(obs_batch)
+        else:
+            return self.eval_model(obs_batch)
 
     def update(self, prev_obs, prev_act, obs, reward, done, warm_up=False, replay=True):
         ordinal = self.reward_to_ordinal(reward)
@@ -36,13 +49,14 @@ class OrdinalDQNAgent(Agent):
         # copy evaluation model to target model at first replay and then every 200 replay steps
         if self.replay_counter % self.replace_target_iter == 0:
             for a in range(self.n_actions):
-                self.target_action_nets[a].set_weights(self.eval_action_nets[a].get_weights())
+                # FIXME: Model architecture has been changed
+                self.target_model[a].set_weights(self.eval_model[a].get_weights())
         self.replay_counter += 1
 
         mini_batch = random.sample(self.memory, self.batch_size)
         x_batch, y_batch = [[] for _ in range(self.n_actions)], [[] for _ in range(self.n_actions)]
         obs_batch = np.array([sample[2][0] for sample in mini_batch])
-        obs_prediction_batch = [target_model(obs_batch) for target_model in self.target_action_nets]
+        obs_prediction_batch = self.predict(obs_batch, target=True)
         borda_scores_batch = self.compute_measure_of_statistical_superiority(obs_batch)
         for i, (prev_obs, prev_act, obs, ordinal, d) in enumerate(mini_batch):
             if not d:
@@ -57,8 +71,8 @@ class OrdinalDQNAgent(Agent):
             y_batch[prev_act].append(target)
         for a in range(self.n_actions):
             if len(x_batch[a]) != 0:
-                self.eval_action_nets[a].fit(np.array(x_batch[a]), np.array(y_batch[a]),
-                                             batch_size=self.batch_size, verbose=0)
+                self.eval_model[a].fit(np.array(x_batch[a]), np.array(y_batch[a]),
+                                       batch_size=self.batch_size, verbose=0)
 
     # Chooses action with epsilon greedy exploration policy
     def choose_action(self, obs, warm_up=False):
@@ -77,8 +91,7 @@ class OrdinalDQNAgent(Agent):
 
     # Computes the Borda counts for a batch of observations given the ordinal_values
     def compute_borda_count(self, obs_batch):
-        # TODO: This call really slows everything down
-        obs_prediction_batch = [eval_model(obs_batch) for eval_model in self.eval_action_nets]
+        obs_prediction_batch = self.predict(obs_batch)
         borda_counts_batch = []
         for i_sample in range(len(obs_batch)):
             # sum up all ordinal values per action for given observation
@@ -105,8 +118,7 @@ class OrdinalDQNAgent(Agent):
 
     # Computes the winning probabilities of actions for a batch of observations given the ordinal_values
     def compute_measure_of_statistical_superiority(self, obs_batch):
-        # TODO: This call really slows everything down
-        obs_prediction_batch = [eval_model(obs_batch) for eval_model in self.eval_action_nets]
+        obs_prediction_batch = self.predict(obs_batch)
         winning_probabilities_batch = []
         for i_sample in range(len(obs_batch)):
             # sum up all ordinal values per action for given observation
