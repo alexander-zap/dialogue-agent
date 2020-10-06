@@ -2,7 +2,7 @@ from agent.agent import Agent
 from util_functions import index_to_agent_action, raw_agent_action_to_index
 import random
 import numpy as np
-from keras.models import Sequential, Model
+from keras.models import Model
 from keras.layers import Dense, Input
 from keras.optimizers import Adam
 from dialog_config import agent_rule_requests
@@ -22,7 +22,7 @@ class OrdinalDQNAgent(Agent):
         action_net_outputs = [self.build_action_net(hidden_layer_2) for _ in range(self.n_actions)]
         model = Model(inputs=input_layer, outputs=action_net_outputs)
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
-        print(model.summary())
+        model.summary()
         return model
 
     # Creates subnet for each action
@@ -48,31 +48,35 @@ class OrdinalDQNAgent(Agent):
     def replay(self):
         # copy evaluation model to target model at first replay and then every 200 replay steps
         if self.replay_counter % self.replace_target_iter == 0:
-            for a in range(self.n_actions):
-                # FIXME: Model architecture has been changed
-                self.target_model[a].set_weights(self.eval_model[a].get_weights())
+            self.target_model.set_weights(self.eval_model.get_weights())
         self.replay_counter += 1
 
         mini_batch = random.sample(self.memory, self.batch_size)
-        x_batch, y_batch = [[] for _ in range(self.n_actions)], [[] for _ in range(self.n_actions)]
+        x_batch, y_batch = [], [[] for _ in range(self.n_actions)]
         obs_batch = np.array([sample[2][0] for sample in mini_batch])
-        obs_prediction_batch = self.predict(obs_batch, target=True)
+        obs_prediction_batch = np.array(self.predict(obs_batch, target=True))
         borda_scores_batch = self.compute_measure_of_statistical_superiority(obs_batch)
         for i, (prev_obs, prev_act, obs, ordinal, d) in enumerate(mini_batch):
+            obs_prediction = obs_prediction_batch[:, i]
             if not d:
                 best_act = np.argmax(borda_scores_batch[i])
-                target = self.gamma * np.array(obs_prediction_batch[best_act][i])
-                target[ordinal] += 1
+                ordinal_q_distribution = self.gamma * np.array(obs_prediction[best_act])
+                ordinal_q_distribution[ordinal] += 1
             else:
-                target = np.zeros(self.n_ordinals)
-                target[ordinal] += 1
+                ordinal_q_distribution = np.zeros(self.n_ordinals)
+                ordinal_q_distribution[ordinal] += 1
             # fit predicted value of previous action in previous observation to target value of max_action
-            x_batch[prev_act].append(prev_obs[0])
-            y_batch[prev_act].append(target)
-        for a in range(self.n_actions):
-            if len(x_batch[a]) != 0:
-                self.eval_model[a].fit(np.array(x_batch[a]), np.array(y_batch[a]),
-                                       batch_size=self.batch_size, verbose=0)
+            target = obs_prediction
+            target[prev_act] = ordinal_q_distribution
+
+            x_batch.append(prev_obs[0])
+            for act_idx in range(self.n_actions):
+                y_batch[act_idx].append(target[act_idx])
+
+        if len(x_batch) != 0:
+            x_batch = np.array(x_batch)
+            y_batch = [np.asarray(y) for y in y_batch]
+            self.eval_model.fit(x_batch, y_batch, batch_size=64, verbose=1)
 
     # Chooses action with epsilon greedy exploration policy
     def choose_action(self, obs, warm_up=False):
