@@ -53,7 +53,7 @@ class OrdinalDQNAgent(Agent):
 
         mini_batch = random.sample(self.memory, self.batch_size)
         x_batch, y_batch = [], [[] for _ in range(self.n_actions)]
-        obs_batch = np.array([sample[2][0] for sample in mini_batch])
+        obs_batch = np.array([sample[2] for sample in mini_batch])
         obs_prediction_batch = np.array(self.predict(obs_batch, target=True))
         borda_scores_batch = self.compute_measure_of_statistical_superiority(obs_batch)
         for i, (prev_obs, prev_act, obs, ordinal, d) in enumerate(mini_batch):
@@ -69,7 +69,7 @@ class OrdinalDQNAgent(Agent):
             target = obs_prediction
             target[prev_act] = ordinal_q_distribution
 
-            x_batch.append(prev_obs[0])
+            x_batch.append(prev_obs)
             for act_idx in range(self.n_actions):
                 y_batch[act_idx].append(target[act_idx])
 
@@ -95,7 +95,7 @@ class OrdinalDQNAgent(Agent):
 
     # Computes the Borda counts for a batch of observations given the ordinal_values
     def compute_borda_count(self, obs_batch):
-        obs_prediction_batch = self.predict(obs_batch)
+        obs_prediction_batch = self.predict(np.array(obs_batch))
         borda_counts_batch = []
         for i_sample in range(len(obs_batch)):
             # sum up all ordinal values per action for given observation
@@ -122,7 +122,7 @@ class OrdinalDQNAgent(Agent):
 
     # Computes the winning probabilities of actions for a batch of observations given the ordinal_values
     def compute_measure_of_statistical_superiority(self, obs_batch):
-        obs_prediction_batch = self.predict(obs_batch)
+        obs_prediction_batch = self.predict(np.array(obs_batch))
         winning_probabilities_batch = []
         for i_sample in range(len(obs_batch)):
             # sum up all ordinal values per action for given observation

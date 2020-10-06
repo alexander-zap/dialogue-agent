@@ -18,7 +18,7 @@ class DQNAgent(Agent):
     def build_model(self):
         model = Sequential()
         model.add(Dense(80, input_dim=self.input_size, activation='relu'))
-        # model.add(Dense(20, activation='relu'))
+        model.add(Dense(20, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
         return model
@@ -39,8 +39,8 @@ class DQNAgent(Agent):
 
         mini_batch = random.sample(self.memory, self.batch_size)
         x_batch, y_batch = [], []
-        prev_obs_batch = np.array([sample[0][0] for sample in mini_batch])
-        obs_batch = np.array([sample[2][0] for sample in mini_batch])
+        prev_obs_batch = np.array([sample[0] for sample in mini_batch])
+        obs_batch = np.array([sample[2] for sample in mini_batch])
         prev_obs_prediction_batch = self.eval_model.predict(prev_obs_batch)
         obs_prediction_batch = self.target_model.predict(obs_batch)
         for i, (prev_obs, prev_act, obs, rew, d) in enumerate(mini_batch):
@@ -52,7 +52,7 @@ class DQNAgent(Agent):
                 target = rew
             # fit predicted value of previous action in previous observation to target value of max_action
             prediction[prev_act] = target
-            x_batch.append(prev_obs[0])
+            x_batch.append(prev_obs)
             y_batch.append(prediction)
         self.eval_model.fit(np.array(x_batch), np.array(y_batch), batch_size=self.batch_size, verbose=0)
 
@@ -72,6 +72,7 @@ class DQNAgent(Agent):
         return action
 
     def get_greedy_action(self, obs):
+        obs = obs.reshape(1, -1)
         action_index = np.argmax(self.eval_model.predict(obs)[0])
         return index_to_agent_action(action_index)
 

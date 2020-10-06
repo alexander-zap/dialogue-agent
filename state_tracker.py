@@ -65,7 +65,7 @@ class StateTracker:
     def get_state(self, done=False):
         # If done then fill state with zeros
         if done:
-            return np.zeros(self.state_size()).reshape(1, -1)
+            return np.zeros(self.state_size())
 
         last_user_action = self.history[-1] if len(self.history) > 0 else None
         last_agent_action = self.history[-2] if len(self.history) > 1 else None
@@ -137,7 +137,7 @@ class StateTracker:
         state_representation = np.hstack(
             [user_act_rep, user_inform_slots_rep, user_request_slots_rep, agent_act_rep, agent_inform_slots_rep,
              agent_request_slots_rep, current_slots_rep, turn_rep, turn_one_hot_rep, kb_binary_rep,
-             kb_count_rep]).flatten().reshape(1, -1)
+             kb_count_rep])
 
         return state_representation
 
