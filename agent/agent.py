@@ -104,18 +104,18 @@ class Agent(ABC):
         """
         self.memory.clear()
 
-    def remember(self, prev_obs, prev_act, obs, rew, d):
+    def remember(self, prev_obs, prev_act_index, obs, rew, d):
         """
         Appends a transition to replay memory.
         All transition variables are given as parameters.
 
         :param prev_obs : Previously observed state
-        :param prev_act : Action executed in the previously observed state
+        :param prev_act_index : Index (in feasible_agent_actions) of action executed in the previously observed state
         :param obs : Newly observed state after executing the action
         :param rew : Newly observed reward for executing the transition
         :param d : Flag whether the episode arrived at a terminal state
         """
-        self.memory.append((prev_obs, prev_act, obs, rew, d))
+        self.memory.append((prev_obs, prev_act_index, obs, rew, d))
 
     def end_episode(self, n_episodes):
         """

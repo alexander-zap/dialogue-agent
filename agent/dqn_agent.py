@@ -42,7 +42,7 @@ class DQNAgent(Agent):
         prev_obs_eval_prediction_batch = self.eval_model.predict(prev_obs_batch)
         obs_eval_prediction_batch = self.eval_model.predict(obs_batch)
         obs_target_prediction_batch = self.target_model.predict(obs_batch)
-        for i, (prev_obs, prev_act, obs, rew, d) in enumerate(mini_batch):
+        for i, (prev_obs, prev_act_index, obs, rew, d) in enumerate(mini_batch):
             prediction = prev_obs_eval_prediction_batch[i]
             if not d:
                 best_act = np.argmax(obs_eval_prediction_batch[i])
@@ -50,7 +50,7 @@ class DQNAgent(Agent):
             else:
                 target = rew
             # Fit predicted value of previous action in previous observation to target value of Bellman equation
-            prediction[prev_act] = target
+            prediction[prev_act_index] = target
             x_batch.append(prev_obs)
             y_batch.append(prediction)
         self.eval_model.fit(np.array(x_batch), np.array(y_batch), batch_size=self.batch_size, verbose=0)
