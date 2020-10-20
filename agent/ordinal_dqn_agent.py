@@ -36,15 +36,6 @@ class OrdinalDQNAgent(Agent):
         else:
             return self.eval_model(obs_batch)
 
-    def update(self, prev_obs, prev_act, obs, reward, done, warm_up=False, replay=True):
-        ordinal = self.reward_to_ordinal(reward)
-        self.remember(prev_obs, prev_act.feasible_action_index, obs, ordinal, done)
-        if replay and not warm_up and len(self.memory) > self.batch_size:
-            self.replay()
-
-    def remember(self, prev_obs, prev_act_index, obs, ordinal, d):
-        self.memory.append((prev_obs, prev_act_index, obs, ordinal, d))
-
     def replay(self):
         # copy evaluation model to target model at first replay and then every 200 replay steps
         if self.replay_counter % self.replace_target_iter == 0:
@@ -56,7 +47,8 @@ class OrdinalDQNAgent(Agent):
         obs_batch = np.array([sample[2] for sample in mini_batch])
         obs_prediction_batch = np.array(self.predict(obs_batch, target=True))
         borda_scores_batch = self.compute_measure_of_statistical_superiority(obs_batch)
-        for i, (prev_obs, prev_act, obs, ordinal, d) in enumerate(mini_batch):
+        for i, (prev_obs, prev_act, obs, reward, d) in enumerate(mini_batch):
+            ordinal = self.reward_to_ordinal(reward)
             obs_prediction = obs_prediction_batch[:, i]
             if not d:
                 best_act = np.argmax(borda_scores_batch[i])
@@ -77,21 +69,6 @@ class OrdinalDQNAgent(Agent):
             x_batch = np.array(x_batch)
             y_batch = [np.asarray(y) for y in y_batch]
             self.eval_model.fit(x_batch, y_batch, batch_size=64, verbose=1)
-
-    # Chooses action with epsilon greedy exploration policy
-    def choose_action(self, obs, warm_up=False):
-        # Choose random action with probability epsilon
-        if warm_up:
-            action = self.get_warm_up_action()
-        # Greedy or warm up action is chosen with probability (1 - epsilon)
-        elif random.random() < self.epsilon:
-            action_index = random.randrange(self.n_actions)
-            action = index_to_agent_action(action_index)
-        else:
-            action = self.get_greedy_action(obs)
-        action.round_num = self.turn
-        self.turn += 1
-        return action
 
     # Computes the Borda counts for a batch of observations given the ordinal_values
     def compute_borda_count(self, obs_batch):
@@ -187,20 +164,6 @@ class OrdinalDQNAgent(Agent):
     def get_greedy_action(self, obs):
         action_index = np.argmax(self.compute_measure_of_statistical_superiority([obs])[0])
         return index_to_agent_action(action_index)
-
-    def get_warm_up_action(self):
-        # Agents' request rules are defined in dialogue_config.py
-        if self.turn < len(agent_rule_requests):
-            raw_action = agent_rule_requests[self.turn]
-            feasible_action_index = raw_agent_action_to_index(raw_action)
-            return index_to_agent_action(feasible_action_index)
-        else:
-            raw_action = agent_rule_requests[-1]
-            feasible_action_index = raw_agent_action_to_index(raw_action)
-            return index_to_agent_action(feasible_action_index)
-
-    def empty_memory(self):
-        self.memory.clear()
 
     @staticmethod
     def reward_to_ordinal(reward):
