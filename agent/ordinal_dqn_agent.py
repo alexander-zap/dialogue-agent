@@ -45,20 +45,22 @@ class OrdinalDQNAgent(Agent):
         mini_batch = random.sample(self.memory, self.batch_size)
         x_batch, y_batch = [], [[] for _ in range(self.n_actions)]
         obs_batch = np.array([sample[2] for sample in mini_batch])
-        obs_prediction_batch = np.array(self.predict(obs_batch, target=True))
+        obs_eval_prediction_batch = np.array(self.predict(obs_batch))
+        obs_target_prediction_batch = np.array(self.predict(obs_batch, target=True))
         borda_scores_batch = self.compute_measure_of_statistical_superiority(obs_batch)
         for i, (prev_obs, prev_act, obs, reward, d) in enumerate(mini_batch):
             ordinal = self.reward_to_ordinal(reward)
-            obs_prediction = obs_prediction_batch[:, i]
+            obs_eval_prediction = obs_eval_prediction_batch[:, i]
+            obs_target_prediction = obs_target_prediction_batch[:, i]
             if not d:
                 best_act = np.argmax(borda_scores_batch[i])
-                ordinal_q_distribution = self.gamma * np.array(obs_prediction[best_act])
+                ordinal_q_distribution = self.gamma * np.array(obs_target_prediction[best_act])
                 ordinal_q_distribution[ordinal] += 1
             else:
                 ordinal_q_distribution = np.zeros(self.n_ordinals)
                 ordinal_q_distribution[ordinal] += 1
             # fit predicted value of previous action in previous observation to target value of max_action
-            target = obs_prediction
+            target = obs_eval_prediction
             target[prev_act] = ordinal_q_distribution
 
             x_batch.append(prev_obs)

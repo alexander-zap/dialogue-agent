@@ -26,11 +26,11 @@ class Agent(ABC):
     @abstractmethod
     def get_greedy_action(self, obs):
         """
-        Retrieves the best next action for the current state observation according to the current policy.
+        Retrieves the best next action for the current observation according to the current policy.
 
         :param obs: Current observation (state representation)
 
-        :return: action: AgentAction which should be chosen next by the agent according to the current policy.
+        :return: action: AgentAction which should be chosen next by the agent according to the current policy
         """
         pass
 
