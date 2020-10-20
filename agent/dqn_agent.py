@@ -19,7 +19,7 @@ class DQNAgent(Agent):
         """
         model = Sequential()
         model.add(Dense(80, input_dim=self.input_size, activation='relu'))
-        model.add(Dense(20, activation='relu'))
+        # model.add(Dense(20, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
         return model
