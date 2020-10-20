@@ -23,7 +23,7 @@ class Chatbot:
         self.agent = DQNAgent(alpha=0.001, gamma=0.9, epsilon=0.0, epsilon_min=0.0,
                               n_actions=len(feasible_agent_actions), n_ordinals=3,
                               observation_dim=(StateTracker.state_size()),
-                              batch_size=64, memory_len=500000, replay_iter=100,
+                              batch_size=128, memory_len=500000, replay_iter=2,
                               replace_target_iter=200)
 
     def run(self, n_episodes, step_size=100, success_rate_threshold=0.1, warm_up=False):
@@ -87,7 +87,6 @@ class Chatbot:
                                                                                         avg_reward))
                     # self.agent.empty_memory()
                     batch_success_best = success_rate
-                    self.agent.empty_memory()
                 batch_successes = []
                 batch_episode_rewards = []
 
@@ -119,6 +118,6 @@ class Chatbot:
 if __name__ == "__main__":
     chatbot = Chatbot()
     print("########################\n--- STARTING WARM UP ---\n########################")
-    chatbot.run(n_episodes=1000, warm_up=True)
+    chatbot.run(n_episodes=10000, warm_up=True)
     print("########################\n--- STARTING TRAINING ---\n#########################")
     chatbot.run(n_episodes=10000, warm_up=False)
