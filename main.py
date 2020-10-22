@@ -1,7 +1,7 @@
 import json
 import pickle
 from numpy import mean
-from agent.dqn_agent import DQNAgent
+from agent.dqn_agent_shared_net import DQNAgent
 from user.usersim_rulebased import RulebasedUsersim
 from dialog_config import feasible_agent_actions
 from state_tracker import StateTracker

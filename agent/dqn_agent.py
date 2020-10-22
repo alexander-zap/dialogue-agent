@@ -18,8 +18,8 @@ class DQNAgent(Agent):
         Creates a neural network in order to predict Q-values per action given an observation (Deep Q-Network)
         """
         model = Sequential()
-        model.add(Dense(80, input_dim=self.input_size, activation='relu'))
-        # model.add(Dense(20, activation='relu'))
+        model.add(Dense(20, input_dim=self.input_size, activation='relu'))
+        model.add(Dense(8, activation='relu'))
         model.add(Dense(self.n_actions, activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
         return model
@@ -43,16 +43,16 @@ class DQNAgent(Agent):
         obs_eval_prediction_batch = self.eval_model.predict(obs_batch)
         obs_target_prediction_batch = self.target_model.predict(obs_batch)
         for i, (prev_obs, prev_act_index, obs, rew, d) in enumerate(mini_batch):
-            prediction = prev_obs_eval_prediction_batch[i]
+            prev_obs_eval_prediction = prev_obs_eval_prediction_batch[i]
             if not d:
                 best_act = np.argmax(obs_eval_prediction_batch[i])
                 target = rew + self.gamma * obs_target_prediction_batch[i][best_act]
             else:
                 target = rew
             # Fit predicted value of previous action in previous observation to target value of Bellman equation
-            prediction[prev_act_index] = target
+            prev_obs_eval_prediction[prev_act_index] = target
             x_batch.append(prev_obs)
-            y_batch.append(prediction)
+            y_batch.append(prev_obs_eval_prediction)
         self.eval_model.fit(np.array(x_batch), np.array(y_batch), batch_size=self.batch_size, verbose=0)
 
     def get_greedy_action(self, obs):
