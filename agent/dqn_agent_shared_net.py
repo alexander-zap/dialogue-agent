@@ -31,10 +31,11 @@ class DQNAgent(Agent):
         return action_net_output
 
     def predict(self, obs_batch, target=False):
+        batch_size = len(obs_batch)
         if target:
-            return self.target_model.predict(obs_batch, batch_size=self.batch_size)
+            return self.target_model.predict(obs_batch, batch_size=batch_size)
         else:
-            return self.eval_model.predict(obs_batch, batch_size=self.batch_size)
+            return self.eval_model.predict(obs_batch, batch_size=batch_size)
 
     def replay(self):
         # copy evaluation model to target model at first replay and then every 200 replay steps
@@ -60,6 +61,7 @@ class DQNAgent(Agent):
                 target = reward
             # fit predicted value of previous action in previous observation to target value of Bellman equation
             prev_obs_eval_prediction[prev_act] = target
+
             x_batch.append(prev_obs)
             for act_idx in range(self.n_actions):
                 y_batch[act_idx].append(prev_obs_eval_prediction[act_idx])
@@ -70,7 +72,7 @@ class DQNAgent(Agent):
             self.eval_model.fit(x_batch, y_batch, batch_size=self.batch_size, verbose=0)
 
     def get_greedy_action(self, obs):
-        predictions = np.concatenate(self.predict(np.array([obs]))).ravel()
+        predictions = self.predict(np.array([obs]))
         action_index = np.argmax(predictions)
         return index_to_agent_action(action_index)
 
