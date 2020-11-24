@@ -11,10 +11,12 @@ class OrdinalDQNAgent(Agent):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.eval_model = self.build_model()
-        self.target_model = self.build_model(target=True)
+        self.target_model = self.build_model()
 
-    # Creates big neural net for DQN
-    def build_model(self, target=False):
+    def build_model(self):
+        """
+        Creates a neural network in order to predict Q-values per action given an observation (Deep Q-Network)
+        """
         input_layer = Input(shape=(self.input_size,))
         hidden_layer_1 = Dense(20, activation='relu')(input_layer)
         action_net_outputs = [self.build_action_net(hidden_layer_1) for _ in range(self.n_actions)]
@@ -37,7 +39,12 @@ class OrdinalDQNAgent(Agent):
             return self.eval_model.predict(obs_batch, batch_size=batch_size)
 
     def replay(self):
-        # copy evaluation model to target model at first replay and then every 200 replay steps
+        """
+        Update the neural network (policy) by replaying and learning from a mini batch of past transitions in memory.
+        The loss is computed by the difference of observed and expected network output.
+        The latter is computed by the Bellman equation.
+        """
+        # Copy eval to target model at first replay and regularly afterwards (frequency defined in replace_target_iter)
         if self.replay_counter % self.replace_target_iter == 0:
             self.target_model.set_weights(self.eval_model.get_weights())
         self.replay_counter += 1
@@ -55,12 +62,12 @@ class OrdinalDQNAgent(Agent):
             obs_target_prediction = obs_target_prediction_batch[:, i]
             if not d:
                 best_act = np.argmax(borda_scores_batch[i])
-                ordinal_q_distribution = self.gamma * np.array(obs_target_prediction[best_act])
+                ordinal_q_distribution = self.gamma * obs_target_prediction[best_act]
                 ordinal_q_distribution[ordinal] += 1
             else:
                 ordinal_q_distribution = np.zeros(self.n_ordinals)
                 ordinal_q_distribution[ordinal] += 1
-            # fit predicted value of previous action in previous observation to target value of Bellman equation
+            # Fit predicted value of previous action in previous observation to target value of Bellman equation
             prev_obs_eval_prediction[prev_act] = ordinal_q_distribution
 
             x_batch.append(prev_obs)
@@ -164,6 +171,13 @@ class OrdinalDQNAgent(Agent):
         return winning_probabilities_batch
 
     def get_greedy_action(self, obs):
+        """
+        Retrieves the best next action for the current observation according to the eval Deep Q-Network prediction.
+
+        :param obs: Current observation (state representation)
+
+        :return: action: AgentAction which should be chosen next by the agent according to the eval Deep Q-Network
+        """
         action_index = np.argmax(self.compute_borda_count([obs])[0])
         return index_to_agent_action(action_index)
 
