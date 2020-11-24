@@ -178,7 +178,8 @@ class OrdinalDQNAgent(Agent):
 
         :return: action: AgentAction which should be chosen next by the agent according to the eval Deep Q-Network
         """
-        action_index = np.argmax(self.compute_borda_count([obs])[0])
+        borda_count = self.compute_borda_count([obs])[0]
+        action_index = np.argmax(borda_count)
         return index_to_agent_action(action_index)
 
     @staticmethod

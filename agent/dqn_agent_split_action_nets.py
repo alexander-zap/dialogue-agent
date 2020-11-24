@@ -63,7 +63,7 @@ class DQNAgent(Agent):
             obs_target_prediction = obs_target_prediction_batch[:, i]
             if not d:
                 best_act = np.argmax(obs_eval_prediction)
-                target = reward + self.gamma * obs_target_prediction[best_act]
+                target = reward + self.gamma * np.array(obs_target_prediction[best_act])
             else:
                 target = reward
             # Fit predicted value of previous action in previous observation to target value of Bellman equation
@@ -87,5 +87,6 @@ class DQNAgent(Agent):
         :return: action: AgentAction which should be chosen next by the agent according to the eval Deep Q-Network
         """
         predictions = self.predict(np.array([obs]))
-        action_index = np.argmax(predictions)
-        return index_to_agent_action(action_index)
+        action_values = np.concatenate(predictions).ravel()
+        greedy_action_index = np.argmax(action_values)
+        return index_to_agent_action(greedy_action_index)

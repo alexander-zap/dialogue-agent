@@ -20,13 +20,14 @@ class Chatbot:
         self.user = RulebasedUsersim(json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
 
         # Create agent
+        # TODO: Activate epsilon-greedy exploration
         self.agent = OrdinalDQNAgent(alpha=0.001, gamma=0.9, epsilon=0.0, epsilon_min=0.0,
                                      n_actions=len(feasible_agent_actions), n_ordinals=3,
                                      observation_dim=(StateTracker.state_size()),
-                                     batch_size=512, memory_len=500000, replay_iter=64,
+                                     batch_size=128, memory_len=500000, replay_iter=16,
                                      replace_target_iter=200)
 
-    def run(self, n_episodes, step_size=100, success_rate_threshold=0.1, warm_up=False):
+    def run(self, n_episodes, step_size=100, success_rate_threshold=0.4, warm_up=False):
         """
         Runs the loop that trains the agent.
 
@@ -85,7 +86,7 @@ class Chatbot:
                 if success_rate > batch_success_best and not warm_up and success_rate > success_rate_threshold:
                     print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                                         avg_reward))
-                    # self.agent.empty_memory()
+                    self.agent.empty_memory()
                     batch_success_best = success_rate
                 batch_successes = []
                 batch_episode_rewards = []
