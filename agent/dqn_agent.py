@@ -1,10 +1,12 @@
+import random
+
+import numpy as np
+from keras.layers import Dense, Input
+from keras.models import Model
+from keras.optimizers import Adam
+
 from agent.agent import Agent
 from util_functions import index_to_agent_action
-import random
-import numpy as np
-from keras.models import Model
-from keras.layers import Dense, Input
-from keras.optimizers import Adam
 
 
 class DQNAgent(Agent):
@@ -18,9 +20,8 @@ class DQNAgent(Agent):
         Creates a neural network in order to predict Q-values per action given an observation (Deep Q-Network)
         """
         input_layer = Input(shape=(self.input_size,))
-        hidden_layer_1 = Dense(20, activation='relu')(input_layer)
-        hidden_layer_2 = Dense(8, activation='relu')(hidden_layer_1)
-        output_layer = Dense(self.n_actions, activation='linear')(hidden_layer_2)
+        hidden_layer_1 = Dense(60, activation='relu')(input_layer)
+        output_layer = Dense(self.n_actions, activation='linear')(hidden_layer_1)
         model = Model(inputs=input_layer, outputs=output_layer)
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
         model.summary()

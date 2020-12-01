@@ -1,10 +1,12 @@
+import random
+
+import numpy as np
+from keras.layers import Dense, Input
+from keras.models import Model
+from keras.optimizers import Adam
+
 from agent.agent import Agent
 from util_functions import index_to_agent_action
-import random
-import numpy as np
-from keras.models import Model
-from keras.layers import Dense, Input
-from keras.optimizers import Adam
 
 
 class OrdinalDQNAgent(Agent):
@@ -18,7 +20,7 @@ class OrdinalDQNAgent(Agent):
         Creates a neural network in order to predict Q-values per action given an observation (Deep Q-Network)
         """
         input_layer = Input(shape=(self.input_size,))
-        hidden_layer_1 = Dense(20, activation='relu')(input_layer)
+        hidden_layer_1 = Dense(60, activation='relu')(input_layer)
         action_net_outputs = [self.build_action_net(hidden_layer_1) for _ in range(self.n_actions)]
         model = Model(inputs=input_layer, outputs=action_net_outputs)
         model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
@@ -27,7 +29,7 @@ class OrdinalDQNAgent(Agent):
 
     # Creates subnet for each action
     def build_action_net(self, action_net_input):
-        action_net_hidden_layer_1 = Dense(8, activation='relu')(action_net_input)
+        action_net_hidden_layer_1 = Dense(12, activation='relu')(action_net_input)
         action_net_output = Dense(self.n_ordinals, activation='linear')(action_net_hidden_layer_1)
         return action_net_output
 
@@ -65,6 +67,11 @@ class OrdinalDQNAgent(Agent):
                 ordinal_q_distribution = self.gamma * obs_target_prediction[best_act]
                 ordinal_q_distribution[ordinal] += 1
             else:
+                # FIXME: This is not the optimal way for the computation of target_distribution if episode is "done".
+                #   This hurst "locality" of close states, because close states can have way higher prediction scores.
+                #   This results in "done" being a cutoff criterion which leads to one-hot distributions.
+                #   Possible solution #1: Do not normalize the distribution in the ordinal position to 1.
+                #   Possible solution #2: Use softmax as an activation function for the output layer.
                 ordinal_q_distribution = np.zeros(self.n_ordinals)
                 ordinal_q_distribution[ordinal] += 1
             # Fit predicted value of previous action in previous observation to target value of Bellman equation
@@ -97,11 +104,12 @@ class OrdinalDQNAgent(Agent):
             for action_a in range(self.n_actions):
                 action_score = 0
                 ordinal_values = ordinal_values_per_action[action_a]
-                ordinal_worth = 1.0
+                # FIXME: Temporary "hack" differing from classical borda count weighting (for faster convergence)
+                ordinal_worth = 0.9
                 for ordinal_value in reversed(ordinal_values):
                     ordinal_probability = ordinal_value / ordinal_value_sum_per_action[action_a]
                     action_score += ordinal_probability * ordinal_worth
-                    ordinal_worth = ordinal_worth / 2
+                    ordinal_worth = ordinal_worth - 1.0
                 borda_counts.append(action_score)
             borda_counts_batch.append(borda_counts)
         return borda_counts_batch

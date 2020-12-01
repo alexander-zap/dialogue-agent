@@ -1,10 +1,12 @@
 import json
 import pickle
+
 from numpy import mean
+
 from agent.ordinal_dqn_agent import OrdinalDQNAgent
-from user.usersim_rulebased import RulebasedUsersim
 from dialog_config import feasible_agent_actions
 from state_tracker import StateTracker
+from user.usersim_rulebased import RulebasedUsersim
 
 
 class Chatbot:
@@ -20,11 +22,10 @@ class Chatbot:
         self.user = RulebasedUsersim(json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
 
         # Create agent
-        # TODO: Activate epsilon-greedy exploration
-        self.agent = OrdinalDQNAgent(alpha=0.001, gamma=0.9, epsilon=0.0, epsilon_min=0.0,
+        self.agent = OrdinalDQNAgent(alpha=0.001, gamma=0.9, epsilon=0.5, epsilon_min=0.05,
                                      n_actions=len(feasible_agent_actions), n_ordinals=3,
                                      observation_dim=(StateTracker.state_size()),
-                                     batch_size=128, memory_len=500000, replay_iter=16,
+                                     batch_size=256, memory_len=80000, replay_iter=16,
                                      replace_target_iter=200)
 
     def run(self, n_episodes, step_size=100, success_rate_threshold=0.4, warm_up=False):
@@ -119,6 +120,6 @@ class Chatbot:
 if __name__ == "__main__":
     chatbot = Chatbot()
     print("########################\n--- STARTING WARM UP ---\n########################")
-    chatbot.run(n_episodes=10000, warm_up=True)
+    chatbot.run(n_episodes=4000, warm_up=True)
     print("########################\n--- STARTING TRAINING ---\n#########################")
-    chatbot.run(n_episodes=10000, warm_up=False)
+    chatbot.run(n_episodes=10000, warm_up=False, success_rate_threshold=0.25)
