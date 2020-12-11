@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from collections import deque
 import random
 from util_functions import index_to_agent_action, raw_agent_action_to_index
 from dialog_config import agent_rule_requests
+from agent.memory.memory import PrioritizedReplayMemory, RandomReplayMemory
 
 
 class Agent(ABC):
     def __init__(self, alpha, gamma, epsilon, epsilon_min, n_actions, n_ordinals, observation_dim, batch_size,
-                 memory_len, replay_iter, replace_target_iter):
+                 memory_len, prioritized_memory, replay_iter, replace_target_iter):
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
@@ -18,7 +18,7 @@ class Agent(ABC):
         self.turn = 0
 
         self.batch_size = batch_size
-        self.memory = deque(maxlen=memory_len)
+        self.memory = PrioritizedReplayMemory(memory_len) if prioritized_memory else RandomReplayMemory(memory_len)
         self.replay_iter = replay_iter
         self.replace_target_iter = replace_target_iter
         self.replay_counter = 0
@@ -115,7 +115,7 @@ class Agent(ABC):
         :param rew : Newly observed reward for executing the transition
         :param d : Flag whether the episode arrived at a terminal state
         """
-        self.memory.append((prev_obs, prev_act_index, obs, rew, d))
+        self.memory.add(prev_obs, prev_act_index, obs, rew, d)
 
     def end_episode(self, n_episodes):
         """
