@@ -12,8 +12,8 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-    def add(self, prev_obs, prev_act, reward, obs, done, *args):
-        memory_item = (prev_obs, prev_act, reward, obs, done, *args)
+    def add(self, prev_obs, prev_act, reward, obs, done, priority):
+        memory_item = (prev_obs, prev_act, reward, obs, done, priority)
         self.memory.append(memory_item)
 
     def sample(self, batch_size):
@@ -23,11 +23,15 @@ class ReplayMemory(object):
         self.memory.clear()
 
 
-class RandomReplayMemory(ReplayMemory):
+class UniformReplayMemory(ReplayMemory):
     def sample(self, batch_size):
         sample_indices = random.sample(range(self.__len__()), batch_size)
         sample_items = itemgetter(*sample_indices)(self.memory)
         return sample_items, sample_indices, np.ones(batch_size)
+
+    def add(self, *args):
+        # Add new experience with constant priority (results in uniform sampling)
+        super().add(*args, 1.0)
 
 
 class PrioritizedReplayMemory(ReplayMemory):

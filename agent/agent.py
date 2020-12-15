@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import random
 from util_functions import index_to_agent_action, raw_agent_action_to_index
 from dialog_config import agent_rule_requests
-from agent.memory.memory import PrioritizedReplayMemory, RandomReplayMemory
+from agent.memory.memory import PrioritizedReplayMemory, UniformReplayMemory
 
 
 class Agent(ABC):
@@ -18,7 +18,7 @@ class Agent(ABC):
         self.turn = 0
 
         self.batch_size = batch_size
-        self.memory = PrioritizedReplayMemory(memory_len) if prioritized_memory else RandomReplayMemory(memory_len)
+        self.memory = PrioritizedReplayMemory(memory_len) if prioritized_memory else UniformReplayMemory(memory_len)
         self.replay_iter = replay_iter
         self.replace_target_iter = replace_target_iter
         self.replay_counter = 0

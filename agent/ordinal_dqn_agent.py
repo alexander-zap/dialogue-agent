@@ -57,7 +57,7 @@ class OrdinalDQNAgent(Agent):
         prev_obs_eval_prediction_batch = np.array(self.predict(prev_obs_batch))
         obs_target_prediction_batch = np.array(self.predict(obs_batch, target=True))
         borda_scores_batch = self.compute_borda_count(obs_batch)
-        for i, (prev_obs, prev_act, obs, reward, d, priority) in enumerate(batch_items):
+        for i, (prev_obs, prev_act, obs, reward, d, _) in enumerate(batch_items):
             ordinal = self.reward_to_ordinal(reward)
             prev_obs_eval_prediction = prev_obs_eval_prediction_batch[:, i]
             obs_target_prediction = obs_target_prediction_batch[:, i]
@@ -67,15 +67,16 @@ class OrdinalDQNAgent(Agent):
                 ordinal_q_distribution[ordinal] += 1
             else:
                 # FIXME: This is not the optimal way for the computation of target_distribution if episode is "done".
-                #   This hurst "locality" of close states, because close states can have way higher prediction scores.
+                #   This hurts "locality" of close states, which can have way higher predictions ([0 1 9] vs. [0 0 1])
                 #   This results in "done" being a cutoff criterion which leads to one-hot distributions.
                 #   Possible solution #1: Do not normalize the distribution in the ordinal position to 1.
                 #   Possible solution #2: Use softmax as an activation function for the output layer.
                 ordinal_q_distribution = np.zeros(self.n_ordinals)
                 ordinal_q_distribution[ordinal] += 1
 
-            # TD-Error of Q-value prediction = (Reward + Discounted Q-value of obs) - Q-value of prev_obs
-            td_error = np.abs(ordinal_q_distribution - prev_obs_eval_prediction[prev_act])
+            # TD-Error of Q-distribution prediction =
+            # Euclidean Distance((Reward-distribution + Discounted Q-distribution of obs) - Q-distribution of prev_obs)
+            td_error = np.linalg.norm(ordinal_q_distribution - prev_obs_eval_prediction[prev_act])
             td_errors.append(td_error)
 
             # Fit predicted value of previous action in previous observation to target value of Bellman equation
