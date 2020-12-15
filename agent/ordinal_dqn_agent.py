@@ -57,7 +57,7 @@ class OrdinalDQNAgent(Agent):
         prev_obs_eval_prediction_batch = np.array(self.predict(prev_obs_batch))
         obs_target_prediction_batch = np.array(self.predict(obs_batch, target=True))
         borda_scores_batch = self.compute_borda_count(obs_batch)
-        for i, (prev_obs, prev_act, obs, reward, d) in enumerate(batch_items):
+        for i, (prev_obs, prev_act, obs, reward, d, priority) in enumerate(batch_items):
             ordinal = self.reward_to_ordinal(reward)
             prev_obs_eval_prediction = prev_obs_eval_prediction_batch[:, i]
             obs_target_prediction = obs_target_prediction_batch[:, i]

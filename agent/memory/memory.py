@@ -51,18 +51,18 @@ class PrioritizedReplayMemory(ReplayMemory):
         return sampled_indices
 
     def sample(self, batch_size):
-        priorities = np.array(zip(*self.memory)[-1])
+        priorities = np.array(list(zip(*self.memory))[-1])
         sample_indices = self._sample_proportional(batch_size, priorities)
 
         sampling_correction_weights = []
         priority_min = np.amin(priorities)
         priority_sum = priorities.sum()
         p_min = priority_min / priority_sum
-        max_weight = (p_min * len(self.memory)) ** (-self.beta)
+        max_weight = (p_min * len(self.memory)) ** (-self._beta)
 
         for idx in sample_indices:
             p_sample = priorities[idx] / priority_sum
-            weight = (p_sample * len(self.memory)) ** (-self.beta)
+            weight = (p_sample * len(self.memory)) ** (-self._beta)
             sampling_correction_weights.append(weight / max_weight)
         sampling_correction_weights = np.array(sampling_correction_weights)
         sample_items = itemgetter(*sample_indices)(self.memory)
@@ -70,7 +70,9 @@ class PrioritizedReplayMemory(ReplayMemory):
 
     def update_priorities(self, idxes, priorities):
         for idx, priority in zip(idxes, priorities):
-            self.memory[idx][-1] = priority ** self._alpha
+            memory_entry = list(self.memory[idx])
+            memory_entry[-1] = priority ** self._alpha
+            self.memory[idx] = tuple(memory_entry)
             # FIXME: _max_priority does not regulate downwards
             self._max_priority = max(self._max_priority, priority)
 
