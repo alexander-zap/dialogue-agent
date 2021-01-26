@@ -6,12 +6,23 @@ For this the agent communicates with the user in a turn-based manner to ask and 
 
 
 ## Why Reinforcement Learning?
+With the goal of learning a "mapping" from dialogue state to the best agent response, one might think of using standard supervised machine learning approaches.
+These require pre-annotated data (dialogue state paired with the "golden" best response), which in turn requires the knowledge of the best response policy in the first place.
+
+Problems with this approach:
+- Defining the perfect behavior beforehand is difficult
+- Perfect (most successful) behavior might need to change over time depending on the user
+
+These problems are solved with Reinforcement Learning.
+Reinforcement Learning trains an agent through trial-and-error conversations with simulated users.
+In this process the agent learns the best policy (of choosing the appropriate response to answer to the user). 
+Once the agent shows promising performance with simulated users, it is deployed to real users and has the option to continue learning in order to further improve its performance or adjust its policy to changed user behavior.
 
 
 ## Component Overview
 ### User
-- has a user goal
-- informs about his wished and requests information from the agent
+- has a user-goal
+- informs about his wishes and requests information from the agent
 
 ### Database
 - database containing all possible entries of the product the user is trying to get (e.g. available movies)
