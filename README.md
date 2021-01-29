@@ -1,5 +1,12 @@
 # dialogue-agent
 
+## Content
+* [What is the goal of dialogue-agent?](#what-is-the-goal-of-dialogue-agent)
+* [Why Reinforcement Learning?](#why-reinforcement-learning)
+* [Component Overview](#component-overview)
+* [Installation](#installation)
+* [Technologies](#technologies)
+
 
 ## What is the goal of dialogue-agent?
 dialogue-agent is a framework which uses reinforcement learning to train a goal-oriented agent for dialogue use cases involving real users.
@@ -14,6 +21,7 @@ Features of the dialogue-agent:
   - manual specification of rules
   - providing training data
 - Can continue learning while in productive use to dynamically react to changes in user trend
+
 
 ## Why Reinforcement Learning?
 With the goal of learning a "mapping" from dialogue state to the best agent response, one might think of using standard supervised machine learning approaches.
