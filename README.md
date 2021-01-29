@@ -7,7 +7,7 @@ The final agent will help users achieve a specific goal e.g. booking a movie tic
 For this the agent communicates with the user in a turn-based manner to ask and respond to their utterances as well as ask further questions to determine the wishes of the user.
 
 Features of the dialogue-agent:
-- Selects action which has the highest probability of achieving the user-goal (based on previous experiences)
+- Selects next action to be executed by the agent which has the highest probability of being a successful step towards achieving the user-goal (based on previous experiences)
 - Includes prior conversation history in his decision process
 - Learns behavior without
   - prior knowledge of the "correct" or best behavior
@@ -40,9 +40,9 @@ Training data is generated from a simulated or real interaction with a user, wit
 
 ### Agent
 - Does not know the user-goal
-- Every turn tries to deduce and fulfill user-goal by
+- Every turn tries to deduce and fulfill user-goal by executing one action from multiple possible actions, including
   - Informing user about requested information
-  - Requesting missing information
+  - Requesting specific information from the user
   - Predicting and suggesting user-goal once enough information has been collected
 
 ### Database
