@@ -1,0 +1,28 @@
+{
+  "patterns": [
+    {
+      "intent": "request",
+      "pattern": "which (.*) are there"
+    },
+    {
+      "intent": "inform",
+      "pattern": "i want (.*)"
+    },
+    {
+      "intent": "yes",
+      "pattern": "yes"
+    },
+    {
+      "intent": "no",
+      "pattern": "no"
+    },
+    {
+      "intent": "anything",
+      "pattern": "i don't care"
+    },
+    {
+      "intent": "ticket",
+      "pattern": "give me a recommendation"
+    }
+  ]
+}
