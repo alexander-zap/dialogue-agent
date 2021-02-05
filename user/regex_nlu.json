@@ -1,0 +1,24 @@
+{
+  "patterns": [
+    {
+      "pattern": "which (.*) is possible",
+      "intent": "request",
+      "entities": ["slot_name"]
+    },
+    {
+      "pattern": "i want (.*) as (.*)",
+      "intent": "inform",
+      "entities": ["slot_value", "slot_name"]
+    },
+    {
+      "pattern": "yes",
+      "intent": "yes",
+      "entities": []
+    },
+    {
+      "pattern": "no",
+      "intent": "no",
+      "entities": []
+    }
+  ]
+}

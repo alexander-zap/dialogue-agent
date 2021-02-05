@@ -6,6 +6,7 @@ from numpy import mean
 from agent.dqn_agent_split_action_nets import DQNAgent
 from dialog_config import feasible_agent_actions
 from state_tracker import StateTracker
+from user.user_real import User
 from user.usersim_rulebased import RulebasedUsersim
 
 
@@ -18,8 +19,14 @@ class Chatbot:
         # Create state tracker
         self.state_tracker = StateTracker(database)
 
-        # Create user with list of user goals
-        self.user = RulebasedUsersim(json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
+        # Create user simulator with list of user goals
+        self.user_simulated = RulebasedUsersim(json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
+
+        # Create user instance for direct text interactions
+        self.user_interactive = User("user/regex_nlu.json")
+
+        # Create empty user (will be assigned on runtime)
+        self.user = None
 
         # Create agent
         self.agent = DQNAgent(alpha=0.001, gamma=0.9, epsilon=0.5, epsilon_min=0.05,
@@ -28,7 +35,7 @@ class Chatbot:
                               batch_size=256, memory_len=80000, prioritized_memory=True,
                               replay_iter=16, replace_target_iter=200)
 
-    def run(self, n_episodes, step_size=100, success_rate_threshold=0.4, warm_up=False):
+    def run(self, n_episodes, step_size=100, success_rate_threshold=0.4, warm_up=False, interactive=False):
         """
         Runs the loop that trains the agent.
 
@@ -38,6 +45,11 @@ class Chatbot:
         Terminates when the episode reaches n_episodes.
 
         """
+
+        if interactive:
+            self.user = self.user_interactive
+        else:
+            self.user = self.user_simulated
 
         batch_episode_rewards = []
         batch_successes = []
