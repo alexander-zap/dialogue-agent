@@ -183,7 +183,7 @@ class RulebasedUsersim(Usersim):
 
     def response_match_found(self, agent_action):
         # Agent needs to execute a 'match_found' action before a 'done' action to have a chance of "SUCCESS"
-        self.constraint_check = "SUCCESS"
+        self.constraint_check = True
 
         # Add the ticket slot to history slots and remove from rest and request slots
         self.history_slots["ticket"] = str(agent_action.inform_slots["ticket"])
@@ -193,7 +193,7 @@ class RulebasedUsersim(Usersim):
 
         # 1) No match could be found with the user informs
         if agent_action.inform_slots["ticket"] == 'no match available':
-            self.constraint_check = "FAIL"
+            self.constraint_check = False
 
         # 2) All goal inform slots must be in agent action and all slot values must be the same
         for slot, value in self.goal['inform_slots'].items():
@@ -201,17 +201,17 @@ class RulebasedUsersim(Usersim):
             if slot in no_query_slots:
                 continue
             if value != agent_action.inform_slots.get(slot, None):
-                self.constraint_check = "FAIL"
+                self.constraint_check = False
                 break
 
-        if self.constraint_check == "FAIL":
+        if not self.constraint_check:
             self.user_action.intent = 'reject'
         else:
             self.user_action.intent = 'thanks'
 
     def evaluate_success(self):
 
-        if self.constraint_check == "FAIL":
+        if not self.constraint_check:
             return -1
 
         # Rest slots must be empty for successful interaction (no goal inform or request slots left)
