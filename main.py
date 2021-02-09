@@ -10,9 +10,9 @@ from user.user_real import User
 from user.usersim_rulebased import RulebasedUsersim
 
 
-class Chatbot:
+class Dialogue:
 
-    def __init__(self):
+    def __init__(self, load_agent_model_from_directory: str = None):
         # Load database of movies (if you get an error unpickling movie_db.pkl then run pickle_converter.py)
         database = pickle.load(open("resources/movie_db.pkl", "rb"), encoding="latin1")
 
@@ -35,13 +35,15 @@ class Chatbot:
                               observation_dim=(StateTracker.state_size()),
                               batch_size=256, memory_len=80000, prioritized_memory=True,
                               replay_iter=16, replace_target_iter=200)
+        if load_agent_model_from_directory:
+            self.agent.load_agent_model(load_agent_model_from_directory)
 
     def run(self, n_episodes, step_size=100, success_rate_threshold=0.4,
             warm_up=False, interactive=False, learning=True):
         """
         Runs the loop that trains the agent.
 
-        Trains the agent on the goal-oriented chatbot task (except warm_up, which fills memory with rule-based behavior)
+        Trains the agent on the goal-oriented dialog task (except warm_up, which fills memory with rule-based behavior)
         Training of the agent's neural network occurs every episode that step_size is a multiple of.
         Replay memory is flushed every time a best success rate is recorded, starting with success_rate_threshold.
         Terminates when the episode reaches n_episodes.
@@ -102,10 +104,14 @@ class Chatbot:
                 if success_rate > batch_success_best and not warm_up and success_rate > success_rate_threshold:
                     print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                                         avg_reward))
+                    self.agent.save_agent_model()
                     self.agent.empty_memory()
                     batch_success_best = success_rate
                 batch_successes = []
                 batch_episode_rewards = []
+
+        # Save final model
+        self.agent.save_agent_model()
 
     def env_step(self, agent_action):
         # 2) Update state tracker with the agent's action
@@ -133,8 +139,8 @@ class Chatbot:
 
 
 if __name__ == "__main__":
-    chatbot = Chatbot()
+    dialogue = Dialogue()
     print("########################\n--- STARTING WARM UP ---\n########################")
-    chatbot.run(n_episodes=4000, warm_up=True)
+    dialogue.run(n_episodes=4000, warm_up=True)
     print("########################\n--- STARTING TRAINING ---\n#########################")
-    chatbot.run(n_episodes=10000, warm_up=False, success_rate_threshold=0.25)
+    dialogue.run(n_episodes=10000, warm_up=False, success_rate_threshold=0.25)
