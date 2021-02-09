@@ -4,8 +4,8 @@ import random
 
 
 class RandomAgent(Agent):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def build_model(self):
+        pass
 
     # Chooses random action
     def get_greedy_action(self, obs):

@@ -9,11 +9,6 @@ from util_functions import index_to_agent_action
 
 
 class DQNAgent(Agent):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.eval_model = self.build_model()
-        self.target_model = self.build_model()
-
     def build_model(self):
         """
         Creates a neural network in order to predict Q-values per action given an observation (Deep Q-Network)

@@ -1,8 +1,12 @@
-from abc import ABC, abstractmethod
 import random
-from util_functions import index_to_agent_action, raw_agent_action_to_index
-from dialog_config import agent_rule_requests
+import time
+from abc import ABC, abstractmethod
+
+from keras.models import Model, load_model, clone_model
+
 from agent.memory.memory import PrioritizedReplayMemory, UniformReplayMemory
+from dialog_config import agent_rule_requests
+from util_functions import index_to_agent_action, raw_agent_action_to_index
 
 
 class Agent(ABC):
@@ -22,6 +26,21 @@ class Agent(ABC):
         self.replay_iter = replay_iter
         self.replace_target_iter = replace_target_iter
         self.replay_counter = 0
+
+        self.eval_model = self.build_model()
+        self.target_model = self.build_model()
+
+    @abstractmethod
+    def build_model(self) -> Model:
+        """
+        Creates a model which is able to generate predictions representing the goodness of each possible action in a
+        given environment observation. Depending on the used agent, the predictions are either direct value function
+        results or representations which are used to compute the value function. This model is updated iteratively in
+        the course of the reinforcement learning process.
+
+        :return model: Above described model in an initial state, which will be updated in the learning process
+        """
+        pass
 
     @abstractmethod
     def get_greedy_action(self, obs):
@@ -122,3 +141,21 @@ class Agent(ABC):
         Gradually reduces epsilon by 2 / n_episodes (number of episodes to be played) until epsilon_min is reached.
         """
         self.epsilon = self.epsilon - 2 / n_episodes if self.epsilon > self.epsilon_min else self.epsilon_min
+
+    def save_agent_model(self):
+        """
+        Saves the value function prediction model to resources directory.
+        To uniquely identify every model, the file name includes date and time.
+        """
+        self.eval_model.save("resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S"))
+
+    def load_agent_model(self, model_directory):
+        """
+        Loads a previously saved value function prediction model to both evaluation and target model attribute.
+        The model for the target model is cloned to prevent reference to same model.
+
+        :param model_directory: Directory of previously saved (save_agent_model) model
+        """
+        model = load_model(model_directory)
+        self.target_model = clone_model(model)
+        self.eval_model = model
