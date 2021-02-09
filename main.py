@@ -24,7 +24,7 @@ class Dialogue:
             json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
 
         # Create user instance for direct text interactions
-        self.user_interactive = User("user/regex_nlu.json")
+        self.user_interactive = User(nlu_path="user/regex_nlu.json", use_voice=True)
 
         # Create empty user (will be assigned on runtime)
         self.user = None

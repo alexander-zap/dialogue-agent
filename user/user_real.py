@@ -6,13 +6,15 @@ from collections import namedtuple
 from action.useraction import UserAction
 from dialog_config import max_round_num
 from util_functions import reward_function
+from user.speech_to_text import speech_to_text
 
 
 class User(object):
     """" Class for interaction with real users """
 
-    def __init__(self, nlu_path):
+    def __init__(self, nlu_path, use_voice=False):
         self.nlu_path = nlu_path
+        self.use_voice = use_voice
         self.turn = 0
         self.user_action = UserAction()
         self.request_slots = []
@@ -132,7 +134,11 @@ class User(object):
     def ask_for_input(self):
         user_nlu_response = None
         while not user_nlu_response:
-            user_utterance = input(">>>").lower()
+            if self.use_voice:
+                user_utterance = speech_to_text()
+                print("User: {}".format(user_utterance))
+            else:
+                user_utterance = input(">>>").lower()
             user_nlu_response = self.nlu_classify(user_utterance)
             if not user_nlu_response:
                 print("I did not understand you. Please rephrase your answer.")
