@@ -16,6 +16,7 @@ class Agent(ABC):
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
+        self.epsilon_anneal_amount = epsilon - epsilon_min
         self.n_actions = n_actions
         self.n_ordinals = n_ordinals
         self.input_size = observation_dim
@@ -138,9 +139,16 @@ class Agent(ABC):
 
     def end_episode(self, n_episodes):
         """
-        Gradually reduces epsilon by 2 / n_episodes (number of episodes to be played) until epsilon_min is reached.
+        Agent logic which should be executed after ending an episode:
+        - Gradually reduce epsilon to achieve exploitation behavior over time
+        - Gradually increase beta of prioritized experience memory to anneal the sampling bias
+        Currently reaching the end-value for these parameters is achieved after half the episodes (hard-coded: 0.5)
         """
-        self.epsilon = self.epsilon - 2 / n_episodes if self.epsilon > self.epsilon_min else self.epsilon_min
+        self.epsilon = self.epsilon - self.epsilon_anneal_amount / (n_episodes * 0.5) \
+            if self.epsilon > self.epsilon_min else self.epsilon_min
+        if isinstance(self.memory, PrioritizedReplayMemory):
+            self.memory.beta = self.memory.beta + self.memory.beta_anneal_amount / (n_episodes * 0.5) \
+                if self.memory.beta < 1 else self.memory.beta
 
     def save_agent_model(self):
         """

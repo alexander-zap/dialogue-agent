@@ -87,7 +87,7 @@ class Dialogue:
                 prev_observation = observation
                 prev_agent_action = agent_action
 
-            if not warm_up:
+            if not warm_up and learning:
                 self.agent.end_episode(n_episodes)
 
             # Evaluation
@@ -101,7 +101,8 @@ class Dialogue:
 
                 print('Episode: {} SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                            avg_reward))
-                if success_rate > batch_success_best and not warm_up and success_rate > success_rate_threshold:
+                if success_rate > batch_success_best and success_rate > success_rate_threshold \
+                        and not warm_up and learning:
                     print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                                         avg_reward))
                     self.agent.save_agent_model()
@@ -110,8 +111,9 @@ class Dialogue:
                 batch_successes = []
                 batch_episode_rewards = []
 
-        # Save final model
-        self.agent.save_agent_model()
+        if not warm_up and learning:
+            # Save final model
+            self.agent.save_agent_model()
 
     def env_step(self, agent_action):
         # 2) Update state tracker with the agent's action
