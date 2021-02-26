@@ -70,14 +70,16 @@ class Dialogue:
 
             # Initialize episode with first user and agent action
             prev_observation = self.state_tracker.get_state()
+            # 1) Agent takes action given state tracker's representation of dialogue (observation)
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
                 step_counter += 1
                 # print(prev_agent_action)
-                # 2) 3) 4) 5) 6)
+                # 2) 3) 4) 5) 6a)
                 observation, reward, done, success = self.env_step(prev_agent_action)
                 if learning:
                     replay = step_counter % self.agent.replay_iter == 0
+                    # 6b) Add experience
                     self.agent.update(prev_observation, prev_agent_action, observation, reward, done,
                                       warm_up=warm_up, replay=replay)
                 # 1) Agent takes action given state tracker's representation of dialogue (observation)
@@ -121,9 +123,10 @@ class Dialogue:
         # 3) User takes action given agent action
         user_action, reward, done, success = self.user.get_action(agent_action)
         # print(user_action)
+        # 4) Infuse error into user action (currently inactive)
         # 5) Update state tracker with user action
         self.state_tracker.update_state_user(user_action)
-        # 6) Get next state and add experience
+        # 6a) Get next state
         observation = self.state_tracker.get_state(done)
         return observation, reward, done, True if success is 1 else False
 

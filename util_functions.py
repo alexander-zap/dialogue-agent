@@ -30,6 +30,8 @@ def reward_function(success, user_request_slots=None, prev_agent_action: AgentAc
     elif success == -1:
         reward -= max_round_num
     elif user_request_slots and prev_agent_action:
-        if not user_request_in_agent_inform():
-            reward -= 5
+        if user_request_in_agent_inform():
+            reward += 2
+        else:
+            reward -= 4
     return reward
