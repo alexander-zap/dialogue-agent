@@ -11,6 +11,11 @@
       "entities": ["slot_value", "slot_name"]
     },
     {
+      "pattern": "thank you",
+      "intent": "thanks",
+      "entities": []
+    },
+    {
       "pattern": "yes",
       "intent": "yes",
       "entities": []

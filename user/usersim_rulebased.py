@@ -59,7 +59,7 @@ class RulebasedUsersim(Usersim):
         done = False
         success = 0
 
-        # End episode if turn maximum is reached
+        # End episode if turn maximum is reached or if agent is done
         if self.turn >= max_round_num:
             done = True
             self.user_action.intent = 'done'
@@ -68,28 +68,19 @@ class RulebasedUsersim(Usersim):
             done = True
             self.user_action.intent = 'done'
             success = self.evaluate_success()
-        elif agent_intent == "inform":
+
+        reward = reward_function(success, self.request_slots, agent_action)
+
+        if agent_intent == "inform":
             self.response_inform(agent_action)
         elif agent_intent == "request":
             self.response_request(agent_action)
         elif agent_intent == "match_found":
             self.response_match_found(agent_action)
 
-        '''
-        elif agent_intent == "thanks":
-            self.response_thanks(agent_action)
-        elif agent_intent == "confirm_answer":
-            self.response_confirm_answer(agent_action)
-        elif agent_intent == "multiple_choice":
-            self.response_multiple_choice(agent_action)
-        '''
-
-        # self.corrupt(self.user_action)
-
-        reward = reward_function(success)
-
         if self.user_action.intent in ['inform', 'reject', 'done']:
             # Inform, reject and done intents do not contain request slots
+            # TODO: But does user forget about his previous requests?
             self.request_slots.clear()
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
         return self.user_action, reward, done, success
@@ -207,7 +198,7 @@ class RulebasedUsersim(Usersim):
         if not self.constraint_check:
             self.user_action.intent = 'reject'
         else:
-            self.user_action.intent = 'thanks'
+            self.user_action.intent = 'accept'
 
     def evaluate_success(self):
 
@@ -215,6 +206,7 @@ class RulebasedUsersim(Usersim):
             return -1
 
         # Rest slots must be empty for successful interaction (no goal inform or request slots left)
+        # TODO: Why do we need this? What if we correctly guess earlier?
         if self.rest_slots:
             return -1
 

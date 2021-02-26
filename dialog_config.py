@@ -43,7 +43,7 @@ agent_rule_requests = [{'intent': 'request', 'inform_slots': {}, 'request_slots'
                        {'intent': 'done', 'inform_slots': {}, 'request_slots': []}]
 
 # All possible intents (for one-hot conversion in state representation)
-all_intents = ['inform', 'request', 'done', 'match_found', 'thanks', 'reject']
+all_intents = ['inform', 'request', 'thanks', 'match_found', 'accept', 'reject', 'done']
 
 # All possible slots (for one-hot conversion in state representation)
 all_slots = list(set(agent_inform_slots + user_inform_slots))

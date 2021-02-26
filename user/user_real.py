@@ -81,8 +81,10 @@ class User(object):
             self.user_action.intent = 'done'
             success = self.evaluate_success()
 
+        reward = reward_function(success, self.request_slots, agent_action)
+
         # Else parse user input and create UserAction
-        else:
+        if not done:
             while not self.user_action.intent:
                 user_nlu_response = self.ask_for_input()
                 if agent_intent == "inform" or agent_intent == "request":
@@ -91,7 +93,6 @@ class User(object):
                     self.process_match_found_response(agent_action, user_nlu_response)
 
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
-        reward = reward_function(success)
         return self.user_action, reward, done, success
 
     def process_normal_response(self, nlu_response):
@@ -121,11 +122,11 @@ class User(object):
             print("No ticket could be found which matches your wishes.")
 
         # 2) User has to say yes to the ticket (all inform slots contained in agent action)
-        if nlu_response_intent == 'no':
+        if nlu_response_intent != 'yes':
             self.constraint_check = False
 
         if self.constraint_check:
-            self.user_action.intent = 'thanks'
+            self.user_action.intent = 'accept'
         else:
             self.user_action.intent = 'reject'
 
