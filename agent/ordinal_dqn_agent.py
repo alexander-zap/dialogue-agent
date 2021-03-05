@@ -196,6 +196,7 @@ class DQNAgent(Agent):
         return index_to_agent_action(action_index)
 
     @staticmethod
+    # TODO: Change this for updated responsiveness rewards
     def reward_to_ordinal(reward):
         if reward < -1:
             return 0
