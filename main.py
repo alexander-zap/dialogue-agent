@@ -55,6 +55,9 @@ class Dialogue:
         else:
             self.user = self.user_simulated
 
+        if not learning:
+            self.agent.epsilon = 0.0
+
         batch_episode_rewards = []
         batch_successes = []
         batch_success_best = 0.0
