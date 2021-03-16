@@ -130,11 +130,7 @@ class User(object):
     def ask_for_input(self):
         user_nlu_response = None
         while not user_nlu_response:
-            # TODO: This is pretty hacky
-            self.gui.wait_state = True
-            while self.gui.wait_state:
-                self.gui.window.update()
-            user_utterance = self.gui.last_message.lower()
+            user_utterance = self.gui.wait_for_user_message().lower()
             user_nlu_response = self.nlu_classify(user_utterance)
             if not user_nlu_response:
                 print("I did not understand you. Please rephrase your answer.")

@@ -74,3 +74,9 @@ class ChatApplication:
 
         self.last_message = msg
         self.wait_state = False
+
+    def wait_for_user_message(self):
+        self.wait_state = True
+        while self.wait_state:
+            self.window.update()
+        return self.last_message
