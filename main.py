@@ -4,6 +4,7 @@ import pickle
 from numpy import mean
 
 from agent.dqn_agent_split_action_nets import DQNAgent
+from chat_application import ChatApplication
 from dialog_config import feasible_agent_actions
 from state_tracker import StateTracker
 from user.user_real import User
@@ -23,8 +24,11 @@ class Dialogue:
         self.user_simulated = RulebasedUsersim(
             json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
 
+        # Create GUI for direct text interactions
+        self.gui = ChatApplication()
+
         # Create user instance for direct text interactions
-        self.user_interactive = User("user/regex_nlu.json")
+        self.user_interactive = User("user/regex_nlu.json", gui=self.gui)
 
         # Create empty user (will be assigned on runtime)
         self.user = None
@@ -52,6 +56,7 @@ class Dialogue:
 
         if interactive:
             self.user = self.user_interactive
+            self.gui.window.update()
         else:
             self.user = self.user_simulated
 
@@ -77,7 +82,10 @@ class Dialogue:
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
                 step_counter += 1
-                # print(prev_agent_action)
+                if interactive:
+                    self.gui.insert_message(str(prev_agent_action), "Chatbot")
+                # else:
+                #     print(prev_agent_action)
                 # 2) 3) 4) 5) 6a)
                 observation, reward, done, success = self.env_step(prev_agent_action)
                 if learning:

@@ -4,6 +4,7 @@ import re
 from collections import namedtuple
 
 from action.useraction import UserAction
+from chat_application import ChatApplication
 from dialog_config import max_round_num
 from util_functions import reward_function
 
@@ -11,8 +12,9 @@ from util_functions import reward_function
 class User(object):
     """" Class for interaction with real users """
 
-    def __init__(self, nlu_path):
+    def __init__(self, nlu_path: str, gui: ChatApplication):
         self.nlu_path = nlu_path
+        self.gui = gui
         self.turn = 0
         self.user_action = UserAction()
         self.request_slots = []
@@ -128,7 +130,11 @@ class User(object):
     def ask_for_input(self):
         user_nlu_response = None
         while not user_nlu_response:
-            user_utterance = input(">>>").lower()
+            # TODO: This is pretty hacky
+            self.gui.wait_state = True
+            while self.gui.wait_state:
+                self.gui.window.update()
+            user_utterance = self.gui.last_message.lower()
             user_nlu_response = self.nlu_classify(user_utterance)
             if not user_nlu_response:
                 print("I did not understand you. Please rephrase your answer.")
