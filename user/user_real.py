@@ -40,11 +40,6 @@ class User(object):
     def get_start_action(self):
         """ Get start user action based on user input """
 
-        # TODO: Does real user need to start with a request?
-        #  Maybe it makes sense to inform first; something general, which is asked by the bot before (in turn "-1")
-        #  e.g. for Saturn: "which category are you looking for?" - "category: hard drives"
-        #  If implemented: Should we change this in the user simulator as well?
-
         user_started_with_request = False
         while not user_started_with_request:
             nlu_response = self.ask_for_input()

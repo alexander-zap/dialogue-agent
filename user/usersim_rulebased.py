@@ -80,7 +80,6 @@ class RulebasedUsersim(Usersim):
 
         if self.user_action.intent in ['inform', 'reject', 'done']:
             # Inform, reject and done intents do not contain request slots
-            # TODO: But does user forget about his previous requests?
             self.request_slots.clear()
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
         return self.user_action, reward, done, success
@@ -206,7 +205,6 @@ class RulebasedUsersim(Usersim):
             return -1
 
         # Rest slots must be empty for successful interaction (no goal inform or request slots left)
-        # TODO: Why do we need this? What if we correctly guess earlier?
         if self.rest_slots:
             return -1
 

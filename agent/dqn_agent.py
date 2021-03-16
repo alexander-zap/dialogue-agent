@@ -35,12 +35,6 @@ class DQNAgent(Agent):
         The latter is computed by the Bellman equation.
         """
 
-        # TODO: Idea? Slowly align target network parameters to eval network
-        # def update_network(primary_network, target_network):
-        #     # update target network parameters slowly from primary network
-        #     for t, e in zip(target_network.trainable_variables, primary_network.trainable_variables):
-        #         t.assign(t * (1 - TAU) + e * TAU)
-
         # Copy eval to target model at first replay and regularly afterwards (frequency defined in replace_target_iter)
         if self.replay_counter % self.replace_target_iter == 0:
             self.target_model.set_weights(self.eval_model.get_weights())
