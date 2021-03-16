@@ -25,7 +25,7 @@ class ReplayMemory(object):
 
 class UniformReplayMemory(ReplayMemory):
     def sample(self, batch_size):
-        sample_indices = random.sample(range(self.__len__()), batch_size)
+        sample_indices = random.sample(range(len(self)), batch_size)
         sample_items = itemgetter(*sample_indices)(self.memory)
         return sample_items, sample_indices, np.ones(batch_size)
 
@@ -35,51 +35,66 @@ class UniformReplayMemory(ReplayMemory):
 
 
 class PrioritizedReplayMemory(ReplayMemory):
-    def __init__(self, size, alpha=.9, beta=.6):
-        super(PrioritizedReplayMemory, self).__init__(size)
-        self._alpha = alpha
-        self._beta = beta
-        self._max_priority = 1.0
-        self._priority_epsilon = 1e-06
+    """
+    :param alpha: Amount of how much prioritization is used (0 -> uniform sampling, 1 -> greedy prioritization)
+    :param beta: Amount of non-uniform sampling compensation (0 -> no compensation, 1 -> complete compensation)
+    """
+
+    def __init__(self, size, alpha=.6, beta=.4):
+        super().__init__(size)
+        self.alpha = alpha
+        self.beta = beta
+        self.beta_anneal_amount = 1.0 - beta
+        self.priority_epsilon = 1e-03
+        self.max_priority = 1.0
+        self.min_priority = self.max_priority
 
     def add(self, *args):
         # Add new experience with highest existing priority
-        memory_priority = self._max_priority ** self._alpha
-        super().add(*args, memory_priority)
-
-    # TODO: Implement the rank-based variant as well
-    def _sample_proportional(self, batch_size, priorities):
-        priorities += self._priority_epsilon
-        sample_probabilities = priorities / priorities.sum()
-        sampled_indices = np.random.choice(range(self.__len__()), size=batch_size, p=sample_probabilities)
-        return sampled_indices
+        super().add(*args, self.max_priority)
 
     def sample(self, batch_size):
+        def compute_probabilities(rank_based=False):
+            # Rank-based prioritization
+            if rank_based:
+                # FIXME
+                rank_probabilities = [1/n for n in range(1, len(self))]
+                return rank_probabilities
+            # Proportional prioritization
+            else:
+                return priorities / priorities.sum()
+
+        def compute_correction_weights():
+            def compute_sampling_correction_weight(idx):
+                p_sample = probabilities[idx]
+                weight = (p_sample * n_memory) ** (-self.beta)
+                return weight
+
+            n_memory = len(self)
+            correction_weights = np.array(list(map(compute_sampling_correction_weight, sampled_indices)))
+            # Normalize sampling correction weights to [0;1]
+            max_correction_weight = (self.min_priority * n_memory) ** (-self.beta)
+            correction_weights = correction_weights / max_correction_weight
+            return correction_weights
+
+        def sample_indices():
+            indices = np.random.choice(range(len(self)), size=batch_size, p=probabilities)
+            return indices
+
         priorities = np.array(list(zip(*self.memory))[-1])
-        sample_indices = self._sample_proportional(batch_size, priorities)
+        probabilities = compute_probabilities()
+        sampled_indices = sample_indices()
+        sampling_correction_weights = compute_correction_weights()
+        sampled_items = itemgetter(*sampled_indices)(self.memory)
+        return sampled_items, sampled_indices, sampling_correction_weights
 
-        sampling_correction_weights = []
-        priority_min = np.amin(priorities)
-        priority_sum = priorities.sum()
-        p_min = priority_min / priority_sum
-        max_weight = (p_min * len(self.memory)) ** (-self._beta)
-
-        for idx in sample_indices:
-            p_sample = priorities[idx] / priority_sum
-            weight = (p_sample * len(self.memory)) ** (-self._beta)
-            sampling_correction_weights.append(weight / max_weight)
-        sampling_correction_weights = np.array(sampling_correction_weights)
-        sample_items = itemgetter(*sample_indices)(self.memory)
-        return sample_items, sample_indices, sampling_correction_weights
-
-    def update_priorities(self, idxes, priorities):
-        for idx, priority in zip(idxes, priorities):
+    def update_priorities(self, idxes, td_errors):
+        for idx, td_error in zip(idxes, td_errors):
             memory_entry = list(self.memory[idx])
-            memory_entry[-1] = priority ** self._alpha
+            # Pre-compute alpha power-operation for updated priorities
+            memory_entry[-1] = (td_error + self.priority_epsilon) ** self.alpha
             self.memory[idx] = tuple(memory_entry)
-            # FIXME: _max_priority does not regulate downwards
-            self._max_priority = max(self._max_priority, priority)
 
-    # TODO: Increase beta with time
-    def set_beta(self, beta):
-        self._beta = beta
+        priorities = np.array(list(zip(*self.memory))[-1])
+        self.min_priority = np.amin(priorities)
+        self.max_priority = np.amax(priorities)

@@ -2,7 +2,7 @@ import random
 import time
 from abc import ABC, abstractmethod
 
-from keras.models import Model, load_model, clone_model
+from keras.models import Model
 
 from agent.memory.memory import PrioritizedReplayMemory, UniformReplayMemory
 from dialog_config import agent_rule_requests
@@ -16,6 +16,7 @@ class Agent(ABC):
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
+        self.epsilon_anneal_amount = epsilon - epsilon_min
         self.n_actions = n_actions
         self.n_ordinals = n_ordinals
         self.input_size = observation_dim
@@ -42,24 +43,6 @@ class Agent(ABC):
         """
         pass
 
-    @abstractmethod
-    def get_greedy_action(self, obs):
-        """
-        Retrieves the best next action for the current observation according to the current policy.
-
-        :param obs: Current observation (state representation)
-
-        :return: action: AgentAction which should be chosen next by the agent according to the current policy
-        """
-        pass
-
-    @abstractmethod
-    def replay(self):
-        """
-        Update the policy by replaying and learning from past transitions in the memory.
-        """
-        pass
-
     def update(self, prev_obs, prev_act, obs, reward, done, warm_up=False, replay=True):
         """
         Updates the current agent by remembering the last transition.
@@ -76,6 +59,26 @@ class Agent(ABC):
         self.remember(prev_obs, prev_act.feasible_action_index, obs, reward, done)
         if replay and not warm_up and len(self.memory) > self.batch_size:
             self.replay()
+
+    def remember(self, prev_obs, prev_act_index, obs, rew, d):
+        """
+        Appends a transition to replay memory.
+        All transition variables are given as parameters.
+
+        :param prev_obs : Previously observed state
+        :param prev_act_index : Index (in feasible_agent_actions) of action executed in the previously observed state
+        :param obs : Newly observed state after executing the action
+        :param rew : Newly observed reward for executing the transition
+        :param d : Flag whether the episode arrived at a terminal state
+        """
+        self.memory.add(prev_obs, prev_act_index, obs, rew, d)
+
+    @abstractmethod
+    def replay(self):
+        """
+        Update the policy by replaying and learning from past transitions in the memory.
+        """
+        pass
 
     def choose_action(self, obs, warm_up=False):
         """
@@ -109,13 +112,22 @@ class Agent(ABC):
         # Agents' request sequence is defined in agent_rule_requests
         if self.turn < len(agent_rule_requests):
             raw_action = agent_rule_requests[self.turn]
-            feasible_action_index = raw_agent_action_to_index(raw_action)
-            action = index_to_agent_action(feasible_action_index)
         else:
             raw_action = agent_rule_requests[-1]
-            feasible_action_index = raw_agent_action_to_index(raw_action)
-            action = index_to_agent_action(feasible_action_index)
+        feasible_action_index = raw_agent_action_to_index(raw_action)
+        action = index_to_agent_action(feasible_action_index)
         return action
+
+    @abstractmethod
+    def get_greedy_action(self, obs):
+        """
+        Retrieves the best next action for the current observation according to the current policy.
+
+        :param obs: Current observation (state representation)
+
+        :return: action: AgentAction which should be chosen next by the agent according to the current policy
+        """
+        pass
 
     def empty_memory(self):
         """
@@ -123,39 +135,32 @@ class Agent(ABC):
         """
         self.memory.clear()
 
-    def remember(self, prev_obs, prev_act_index, obs, rew, d):
-        """
-        Appends a transition to replay memory.
-        All transition variables are given as parameters.
-
-        :param prev_obs : Previously observed state
-        :param prev_act_index : Index (in feasible_agent_actions) of action executed in the previously observed state
-        :param obs : Newly observed state after executing the action
-        :param rew : Newly observed reward for executing the transition
-        :param d : Flag whether the episode arrived at a terminal state
-        """
-        self.memory.add(prev_obs, prev_act_index, obs, rew, d)
-
     def end_episode(self, n_episodes):
         """
-        Gradually reduces epsilon by 2 / n_episodes (number of episodes to be played) until epsilon_min is reached.
+        Agent logic which should be executed after ending an episode:
+        - Gradually reduce epsilon to achieve exploitation behavior over time
+        - Gradually increase beta of prioritized experience memory to anneal the sampling bias
+        Currently reaching the end-value for these parameters is achieved after half the episodes (hard-coded: 0.5)
         """
-        self.epsilon = self.epsilon - 2 / n_episodes if self.epsilon > self.epsilon_min else self.epsilon_min
+        self.epsilon = self.epsilon - self.epsilon_anneal_amount / (n_episodes * 0.5) \
+            if self.epsilon > self.epsilon_min else self.epsilon_min
+        if isinstance(self.memory, PrioritizedReplayMemory):
+            self.memory.beta = self.memory.beta + self.memory.beta_anneal_amount / (n_episodes * 0.5) \
+                if self.memory.beta < 1 else self.memory.beta
 
     def save_agent_model(self):
         """
         Saves the value function prediction model to resources directory.
         To uniquely identify every model, the file name includes date and time.
         """
-        self.eval_model.save("resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S"))
+        self.eval_model.save_weights("resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S") + ".h5")
 
-    def load_agent_model(self, model_directory):
+    def load_agent_model(self, model_file_path):
         """
         Loads a previously saved value function prediction model to both evaluation and target model attribute.
         The model for the target model is cloned to prevent reference to same model.
 
-        :param model_directory: Directory of previously saved (save_agent_model) model
+        :param model_file_path: File path of previously saved (save_agent_model) model
         """
-        model = load_model(model_directory)
-        self.target_model = clone_model(model)
-        self.eval_model = model
+        self.target_model.load_weights(model_file_path)
+        self.eval_model.load_weights(model_file_path)

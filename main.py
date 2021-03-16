@@ -55,6 +55,9 @@ class Dialogue:
         else:
             self.user = self.user_simulated
 
+        if not learning:
+            self.agent.epsilon = 0.0
+
         batch_episode_rewards = []
         batch_successes = []
         batch_success_best = 0.0
@@ -70,14 +73,16 @@ class Dialogue:
 
             # Initialize episode with first user and agent action
             prev_observation = self.state_tracker.get_state()
+            # 1) Agent takes action given state tracker's representation of dialogue (observation)
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
                 step_counter += 1
                 # print(prev_agent_action)
-                # 2) 3) 4) 5) 6)
+                # 2) 3) 4) 5) 6a)
                 observation, reward, done, success = self.env_step(prev_agent_action)
                 if learning:
                     replay = step_counter % self.agent.replay_iter == 0
+                    # 6b) Add experience
                     self.agent.update(prev_observation, prev_agent_action, observation, reward, done,
                                       warm_up=warm_up, replay=replay)
                 # 1) Agent takes action given state tracker's representation of dialogue (observation)
@@ -87,7 +92,7 @@ class Dialogue:
                 prev_observation = observation
                 prev_agent_action = agent_action
 
-            if not warm_up:
+            if not warm_up and learning:
                 self.agent.end_episode(n_episodes)
 
             # Evaluation
@@ -101,7 +106,8 @@ class Dialogue:
 
                 print('Episode: {} SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                            avg_reward))
-                if success_rate > batch_success_best and not warm_up and success_rate > success_rate_threshold:
+                if success_rate > batch_success_best and success_rate > success_rate_threshold \
+                        and not warm_up and learning:
                     print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                                         avg_reward))
                     self.agent.save_agent_model()
@@ -110,8 +116,9 @@ class Dialogue:
                 batch_successes = []
                 batch_episode_rewards = []
 
-        # Save final model
-        self.agent.save_agent_model()
+        if not warm_up and learning:
+            # Save final model
+            self.agent.save_agent_model()
 
     def env_step(self, agent_action):
         # 2) Update state tracker with the agent's action
@@ -119,9 +126,10 @@ class Dialogue:
         # 3) User takes action given agent action
         user_action, reward, done, success = self.user.get_action(agent_action)
         # print(user_action)
+        # 4) Infuse error into user action (currently inactive)
         # 5) Update state tracker with user action
         self.state_tracker.update_state_user(user_action)
-        # 6) Get next state and add experience
+        # 6a) Get next state
         observation = self.state_tracker.get_state(done)
         return observation, reward, done, True if success is 1 else False
 

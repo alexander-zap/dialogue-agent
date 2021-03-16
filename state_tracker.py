@@ -24,9 +24,9 @@ class StateTracker:
         # Fill the informs lots of the action by querying the database
         agent_action = self.fill_agent_action(agent_action)
         if agent_action.intent == 'inform':
-            for slot in agent_action.inform_slots:
+            for key, value in agent_action.inform_slots.items():
                 # Update the current informs with the chosen agent inform slots
-                self.current_informs[slot] = agent_action.inform_slots[slot]
+                self.current_informs[key] = value
         elif agent_action.intent == 'match_found':
             # Update the value of ticket in current informs with the new value found in the database
             # Do not update other current_informs with agent_action inform slots, since they are from the full ticket

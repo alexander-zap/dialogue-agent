@@ -34,6 +34,7 @@ class DQNAgent(Agent):
         The loss is computed by the difference of observed and expected network output.
         The latter is computed by the Bellman equation.
         """
+
         # Copy eval to target model at first replay and regularly afterwards (frequency defined in replace_target_iter)
         if self.replay_counter % self.replace_target_iter == 0:
             self.target_model.set_weights(self.eval_model.get_weights())
@@ -57,6 +58,8 @@ class DQNAgent(Agent):
                 target = reward
 
             # TD-Error of Q-value prediction = (Reward + Discounted Q-value of obs) - Q-value of prev_obs
+            # TODO: Is it okay that td_error is computed between different network predictions?
+            # TODO: Idea? Use same loss function as in the network for td_error computation?
             td_error = np.abs(target - prev_obs_eval_prediction[prev_act])
             td_errors.append(td_error)
 

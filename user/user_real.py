@@ -42,11 +42,6 @@ class User(object):
     def get_start_action(self):
         """ Get start user action based on user input """
 
-        # TODO: Does real user need to start with a request?
-        #  Maybe it makes sense to inform first; something general, which is asked by the bot before (in turn "-1")
-        #  e.g. for Saturn: "which category are you looking for?" - "category: hard drives"
-        #  If implemented: Should we change this in the user simulator as well?
-
         user_started_with_request = False
         while not user_started_with_request:
             nlu_response = self.ask_for_input()
@@ -83,8 +78,10 @@ class User(object):
             self.user_action.intent = 'done'
             success = self.evaluate_success()
 
+        reward = reward_function(success, self.request_slots, agent_action)
+
         # Else parse user input and create UserAction
-        else:
+        if not done:
             while not self.user_action.intent:
                 user_nlu_response = self.ask_for_input()
                 if agent_intent == "inform" or agent_intent == "request":
@@ -93,7 +90,6 @@ class User(object):
                     self.process_match_found_response(agent_action, user_nlu_response)
 
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
-        reward = reward_function(success)
         return self.user_action, reward, done, success
 
     def process_normal_response(self, nlu_response):
@@ -123,11 +119,11 @@ class User(object):
             print("No ticket could be found which matches your wishes.")
 
         # 2) User has to say yes to the ticket (all inform slots contained in agent action)
-        if nlu_response_intent == 'no':
+        if nlu_response_intent != 'yes':
             self.constraint_check = False
 
         if self.constraint_check:
-            self.user_action.intent = 'thanks'
+            self.user_action.intent = 'accept'
         else:
             self.user_action.intent = 'reject'
 
