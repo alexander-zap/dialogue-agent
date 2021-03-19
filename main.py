@@ -82,12 +82,8 @@ class Dialogue:
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
                 step_counter += 1
-                if interactive:
-                    self.gui.insert_message(str(prev_agent_action), "Chatbot")
-                # else:
-                #     print(prev_agent_action)
                 # 2) 3) 4) 5) 6a)
-                observation, reward, done, success = self.env_step(prev_agent_action)
+                observation, reward, done, success = self.env_step(prev_agent_action, interactive)
                 if learning:
                     replay = step_counter % self.agent.replay_iter == 0
                     # 6b) Add experience
@@ -128,9 +124,12 @@ class Dialogue:
             # Save final model
             self.agent.save_agent_model()
 
-    def env_step(self, agent_action):
+    def env_step(self, agent_action, interactive=False):
         # 2) Update state tracker with the agent's action
         self.state_tracker.update_state_agent(agent_action)
+        if interactive:
+            self.gui.insert_message(agent_action.to_utterance(), "Chatbot")
+        # print(prev_agent_action)
         # 3) User takes action given agent action
         user_action, reward, done, success = self.user.get_action(agent_action)
         # print(user_action)
