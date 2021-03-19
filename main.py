@@ -4,6 +4,7 @@ import pickle
 from numpy import mean
 
 from agent.dqn_agent_split_action_nets import DQNAgent
+from chat_application import ChatApplication
 from dialog_config import feasible_agent_actions
 from state_tracker import StateTracker
 from user.user_real import User
@@ -23,8 +24,11 @@ class Dialogue:
         self.user_simulated = RulebasedUsersim(
             json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
 
+        # Create GUI for direct text interactions
+        self.gui = ChatApplication()
+
         # Create user instance for direct text interactions
-        self.user_interactive = User("user/regex_nlu.json")
+        self.user_interactive = User("user/regex_nlu.json", gui=self.gui)
 
         # Create empty user (will be assigned on runtime)
         self.user = None
@@ -52,6 +56,7 @@ class Dialogue:
 
         if interactive:
             self.user = self.user_interactive
+            self.gui.window.update()
         else:
             self.user = self.user_simulated
 
@@ -66,7 +71,7 @@ class Dialogue:
         for episode in range(n_episodes):
 
             # print("########################\n------ EPISODE {} ------\n########################".format(episode))
-            self.episode_reset()
+            self.episode_reset(interactive)
             done = False
             success = False
             episode_reward = 0
@@ -77,9 +82,8 @@ class Dialogue:
             prev_agent_action = self.agent.choose_action(prev_observation, warm_up=warm_up)
             while not done:
                 step_counter += 1
-                # print(prev_agent_action)
                 # 2) 3) 4) 5) 6a)
-                observation, reward, done, success = self.env_step(prev_agent_action)
+                observation, reward, done, success = self.env_step(prev_agent_action, interactive)
                 if learning:
                     replay = step_counter % self.agent.replay_iter == 0
                     # 6b) Add experience
@@ -120,9 +124,12 @@ class Dialogue:
             # Save final model
             self.agent.save_agent_model()
 
-    def env_step(self, agent_action):
+    def env_step(self, agent_action, interactive=False):
         # 2) Update state tracker with the agent's action
         self.state_tracker.update_state_agent(agent_action)
+        if interactive:
+            self.gui.insert_message(agent_action.to_utterance(), "Chatbot")
+        # print(agent_action)
         # 3) User takes action given agent action
         user_action, reward, done, success = self.user.get_action(agent_action)
         # print(user_action)
@@ -133,13 +140,16 @@ class Dialogue:
         observation = self.state_tracker.get_state(done)
         return observation, reward, done, True if success is 1 else False
 
-    def episode_reset(self):
+    def episode_reset(self, interactive=False):
         # Reset the state tracker
         self.state_tracker.reset()
         # Reset the user
         self.user.reset()
         # Reset the agent
         self.agent.turn = 0
+        # Reset the interactive GUI
+        if interactive:
+            self.gui.reset_text_widget()
         # User start action
         user_action, _, _, _ = self.user.get_action(None)
         # print(user_action)
