@@ -47,6 +47,8 @@ class Usersim(ABC):
         return sample_goal
 
     def get_action(self, agent_action):
+        self.user_action = UserAction()
+        self.user_action.round_num = self.turn
         if self.turn == 0:
             action = self.get_start_action()
         else:
@@ -66,10 +68,8 @@ class Usersim(ABC):
 
     @abstractmethod
     def get_start_action(self):
-        self.user_action = UserAction()
-        self.user_action.round_num = self.turn
+        pass
 
     @abstractmethod
     def get_next_action(self, agent_action):
-        self.user_action = UserAction()
-        self.user_action.round_num = self.turn
+        pass

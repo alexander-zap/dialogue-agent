@@ -3,17 +3,19 @@ import json
 import re
 from collections import namedtuple
 
+from chat_application import ChatApplication
+
 from action.useraction import UserAction
 from dialog_config import max_round_num
 from util_functions import reward_function
-from user.speech_to_text import speech_to_text
 
 
 class User(object):
     """" Class for interaction with real users """
 
-    def __init__(self, nlu_path, use_voice=False):
+    def __init__(self, nlu_path: str, gui: ChatApplication, use_voice=False):
         self.nlu_path = nlu_path
+        self.gui = gui
         self.use_voice = use_voice
         self.turn = 0
         self.user_action = UserAction()
@@ -64,7 +66,6 @@ class User(object):
 
         agent_intent = agent_action.intent
 
-        self.request_slots.clear()
         done = False
         success = 0
 
@@ -73,12 +74,12 @@ class User(object):
             done = True
             success = -1
             self.user_action.intent = 'done'
-        elif agent_intent == "done":
+        if agent_intent == "done":
             done = True
             self.user_action.intent = 'done'
             success = self.evaluate_success()
 
-        reward = reward_function(success, self.request_slots, agent_action)
+        agent_responsive = agent_action_answered_user_request(self.request_slots, agent_action)
 
         # Else parse user input and create UserAction
         if not done:
@@ -89,7 +90,14 @@ class User(object):
                 elif agent_intent == "match_found":
                     self.process_match_found_response(agent_action, user_nlu_response)
 
+        # End dialogue if user replied that he is done
+        if self.user_action.intent == 'done':
+            done = True
+            success = self.evaluate_success()
+
+        reward = reward_function(success, agent_responsive)
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
+        self.request_slots.clear()
         return self.user_action, reward, done, success
 
     def process_normal_response(self, nlu_response):
@@ -106,6 +114,9 @@ class User(object):
 
         elif user_intent == 'thanks':
             self.user_action.intent = 'thanks'
+
+        elif user_intent == 'done':
+            self.user_action.intent = 'done'
 
     def process_match_found_response(self, agent_action, nlu_response):
         nlu_response_intent = nlu_response.intent
@@ -134,7 +145,7 @@ class User(object):
                 user_utterance = speech_to_text()
                 print("User: {}".format(user_utterance))
             else:
-                user_utterance = input(">>>").lower()
+                user_utterance = self.gui.wait_for_user_message().lower()
             user_nlu_response = self.nlu_classify(user_utterance)
             if not user_nlu_response:
                 print("I did not understand you. Please rephrase your answer.")
@@ -148,7 +159,7 @@ class User(object):
 
     def nlu_classify(self, utterance):
         regex_entries = []
-        with open(self.nlu_path) as regex_json:
+        with open(self.nlu_path, encoding="utf-8") as regex_json:
             patterns_json = json.load(regex_json)
             for regex_entry in patterns_json['patterns']:
                 regex_entries.append((regex_entry['pattern'], regex_entry['intent'], regex_entry['entities']))
