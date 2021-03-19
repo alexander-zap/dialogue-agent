@@ -16,12 +16,12 @@ class AgentAction:
             inform_key = list(self.inform_slots.keys())[0]
             inform_value = list(self.inform_slots.values())[0]
             if self.intent == 'inform':
-                if inform_value == 'no_match_available':
+                if inform_value == 'no match available':
                     return "Ich konnte für {} leider keinen Match finden.".format(inform_key)
                 else:
                     return "Als {} wäre {} möglich.".format(inform_key, inform_value)
             elif self.intent == 'match_found':
-                if 'no_match_available' in inform_value:
+                if 'no match available' in inform_value:
                     return "Ich konnte leider kein passendes Ticket finden."
                 else:
                     return "Kann ich Ihnen das Ticket {} empfehlen?".format(self.inform_slots)

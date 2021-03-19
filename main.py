@@ -71,7 +71,7 @@ class Dialogue:
         for episode in range(n_episodes):
 
             # print("########################\n------ EPISODE {} ------\n########################".format(episode))
-            self.episode_reset()
+            self.episode_reset(interactive)
             done = False
             success = False
             episode_reward = 0
@@ -129,7 +129,7 @@ class Dialogue:
         self.state_tracker.update_state_agent(agent_action)
         if interactive:
             self.gui.insert_message(agent_action.to_utterance(), "Chatbot")
-        # print(prev_agent_action)
+        # print(agent_action)
         # 3) User takes action given agent action
         user_action, reward, done, success = self.user.get_action(agent_action)
         # print(user_action)
@@ -140,13 +140,16 @@ class Dialogue:
         observation = self.state_tracker.get_state(done)
         return observation, reward, done, True if success is 1 else False
 
-    def episode_reset(self):
+    def episode_reset(self, interactive=False):
         # Reset the state tracker
         self.state_tracker.reset()
         # Reset the user
         self.user.reset()
         # Reset the agent
         self.agent.turn = 0
+        # Reset the interactive GUI
+        if interactive:
+            self.gui.reset_text_widget()
         # User start action
         user_action, _, _, _ = self.user.get_action(None)
         # print(user_action)

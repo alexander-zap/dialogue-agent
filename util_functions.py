@@ -19,18 +19,26 @@ def raw_agent_action_to_index(raw_agent_action):
     return feasible_agent_action_index
 
 
-def reward_function(success, user_request_slots=None, prev_agent_action: AgentAction = None):
-    def user_request_in_agent_inform():
-        agent_inform_slots = set(prev_agent_action.inform_slots.keys())
-        return bool(set(user_request_slots).intersection(set(agent_inform_slots)))
+def agent_action_answered_user_request(user_request_slots=None, agent_action=None):
+    """
+    Check whether user_request was answered in agent_informs
 
+    :param user_request_slots: Slots user requested in previous user_action
+    :param agent_action: Action of agent as response to previous user_action
+    :return: Boolean, whether a request slot from previous user_action was contained in the inform slots of agent_action
+    """
+    agent_inform_slots = set(agent_action.inform_slots.keys())
+    return bool(set(user_request_slots).intersection(set(agent_inform_slots)))
+
+
+def reward_function(success, agent_responsive=None):
     reward = -1
     if success == 1:
         reward += 2 * max_round_num
     elif success == -1:
         reward -= max_round_num
-    elif user_request_slots and prev_agent_action:
-        if user_request_in_agent_inform():
+    elif agent_responsive is not None:
+        if agent_responsive:
             reward += 2
         else:
             reward -= 4

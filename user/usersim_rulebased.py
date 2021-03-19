@@ -2,7 +2,7 @@ from user.usersim import Usersim
 import random
 import copy
 from dialog_config import no_query_slots, max_round_num
-from util_functions import reward_function
+from util_functions import reward_function, agent_action_answered_user_request
 
 
 class RulebasedUsersim(Usersim):
@@ -20,8 +20,6 @@ class RulebasedUsersim(Usersim):
 
     def get_start_action(self):
         """ Randomly samples a start action based on user goal """
-
-        super().get_start_action()
 
         # User simulator always tries to start with a request
         self.user_action.intent = "request"
@@ -52,8 +50,6 @@ class RulebasedUsersim(Usersim):
     def get_next_action(self, agent_action):
         """ Generate next user action based on last agent action and user state """
 
-        super().get_next_action(agent_action)
-
         agent_intent = agent_action.intent
 
         done = False
@@ -62,14 +58,14 @@ class RulebasedUsersim(Usersim):
         # End episode if turn maximum is reached or if agent is done
         if self.turn >= max_round_num:
             done = True
-            self.user_action.intent = 'done'
             success = -1
+            self.user_action.intent = 'done'
         if agent_intent == "done":
             done = True
             self.user_action.intent = 'done'
             success = self.evaluate_success()
 
-        reward = reward_function(success, self.request_slots, agent_action)
+        agent_responsive = agent_action_answered_user_request(self.request_slots, agent_action)
 
         if agent_intent == "inform":
             self.response_inform(agent_action)
@@ -81,6 +77,8 @@ class RulebasedUsersim(Usersim):
         if self.user_action.intent in ['inform', 'reject', 'done']:
             # Inform, reject and done intents do not contain request slots
             self.request_slots.clear()
+
+        reward = reward_function(success, agent_responsive)
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
         return self.user_action, reward, done, success
 

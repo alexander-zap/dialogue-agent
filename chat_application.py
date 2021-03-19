@@ -80,3 +80,9 @@ class ChatApplication:
         while self.wait_state:
             self.window.update()
         return self.last_message
+
+    def reset_text_widget(self):
+        self.text_widget.configure(state=tk.NORMAL)
+        self.text_widget.delete(1.0, tk.END)
+        self.text_widget.configure(state=tk.DISABLED)
+        self.window.update()
