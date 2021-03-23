@@ -35,7 +35,6 @@ class DBQuery:
         Returns:
             dict: The available items in the database
         """
-
         # Filter non-queryable items and keys with the value 'anything' since those are inconsequential to the
         # current_inform_slots
         new_constraints = {k: v for k, v in current_inform_slots.items()

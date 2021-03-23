@@ -1,72 +1,64 @@
-import time
-
 import deepspeech
-import keyboard
 import numpy as np
 import pyaudio
 
-# DeepSpeech parameters
-MODEL_FILE_PATH = \
-    r"C:\Users\alexander.zap\PycharmProjects\task-chatbot\resources\deepspeech-model\deepspeech-0.8.1-models.pbmm"
-SCORER_FILE_PATH = \
-    r"C:\Users\alexander.zap\PycharmProjects\task-chatbot\resources\deepspeech-model\deepspeech-0.8.1-models.scorer"
-BEAM_WIDTH = 500
-LM_ALPHA = 0.75
-LM_BETA = 1.85
 
-# Make DeepSpeech Model
-model = deepspeech.Model(MODEL_FILE_PATH)
-model.enableExternalScorer(SCORER_FILE_PATH)
-model.setScorerAlphaBeta(LM_ALPHA, LM_BETA)
-model.setBeamWidth(BEAM_WIDTH)
+class SpeechToText:
 
-# PyAudio parameters
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000
-CHUNK_SIZE = 1024
+    def __init__(self, model_file_path, scorer_file_path, beam_width, lm_alpha, lm_beta):
+        # Make DeepSpeech Model
+        self.model = deepspeech.Model(model_file_path)
+        self.model.enableExternalScorer(scorer_file_path)
+        self.model.setScorerAlphaBeta(lm_alpha, lm_beta)
+        self.model.setBeamWidth(beam_width)
 
-transcribed_text = ''
+        # PyAudio parameters
+        self.format = pyaudio.paInt16
+        self.channels = 1
+        self.rate = 16000
+        self.chunk_size = 1024
 
+        self.transcribed_text = ''
 
-def speech_to_text():
-    global transcribed_text
+        self.audio = pyaudio.PyAudio()
+        self.audio_stream = None
+        self.deepspeech_stream = None
 
-    # Create a Streaming session
-    ds_stream = model.createStream()
-    audio = pyaudio.PyAudio()
+    def reset(self):
+        if self.audio_stream:
+            self.audio_stream.stop_stream()
+            self.audio_stream.close()
 
-    # Encapsulate DeepSpeech audio feeding into a callback for PyAudio
-    def process_audio(in_data, frame_count, time_info, status):
-        global transcribed_text
-        data16 = np.frombuffer(in_data, dtype=np.int16)
-        ds_stream.feedAudioContent(data16)
-        intermediate_text = ds_stream.intermediateDecode()
-        if intermediate_text != transcribed_text:
-            transcribed_text = intermediate_text
-        return in_data, pyaudio.paContinue
+        if self.audio:
+            self.audio.terminate()
 
-    # Feed audio to DeepSpeech in a callback to PyAudio
-    stream = audio.open(
-        format=FORMAT,
-        channels=CHANNELS,
-        rate=RATE,
-        input=True,
-        frames_per_buffer=CHUNK_SIZE,
-        stream_callback=process_audio
-    )
+        if self.deepspeech_stream:
+            self.deepspeech_stream.finishStream()
 
-    print('Please start speaking, when done press "#" ...')
-    stream.start_stream()
+        self.audio = pyaudio.PyAudio()
+        self.deepspeech_stream = None
+        self.audio_stream = None
 
-    keyboard.on_press_key("#", lambda _: end_stream())
+    def start_speech_to_text(self):
+        # Create a Streaming session
+        self.deepspeech_stream = self.model.createStream()
 
-    def end_stream():
-        global transcribed_text
-        # PyAudio
-        stream.stop_stream()
+        # Encapsulate DeepSpeech audio feeding into a callback for PyAudio
+        def process_audio(in_data, frame_count, time_info, status):
+            data16 = np.frombuffer(in_data, dtype=np.int16)
+            self.deepspeech_stream.feedAudioContent(data16)
+            intermediate_text = self.deepspeech_stream.intermediateDecode()
+            self.transcribed_text = intermediate_text
+            return in_data, pyaudio.paContinue
 
-    while stream.is_active():
-        time.sleep(0.2)
+        # Feed audio to DeepSpeech in a callback to PyAudio
+        self.audio_stream = self.audio.open(
+            format=self.format,
+            channels=self.channels,
+            rate=self.rate,
+            input=True,
+            frames_per_buffer=self.chunk_size,
+            stream_callback=process_audio
+        )
 
-    return transcribed_text
+        self.audio_stream.start_stream()

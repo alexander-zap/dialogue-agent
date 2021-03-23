@@ -3,11 +3,10 @@ import json
 import re
 from collections import namedtuple
 
-from chat_application import ChatApplication
-
 from action.useraction import UserAction
-from dialog_config import max_round_num
-from util_functions import reward_function
+from chat_application import ChatApplication
+from dialog_config import max_round_num, agent_inform_slots, slot_name_translations
+from util_functions import reward_function, agent_action_answered_user_request
 
 
 class User(object):
@@ -142,13 +141,18 @@ class User(object):
         user_nlu_response = None
         while not user_nlu_response:
             if self.use_voice:
-                user_utterance = speech_to_text()
-                print("User: {}".format(user_utterance))
+                user_utterance = self.gui.wait_for_speech_to_text().lower()
             else:
                 user_utterance = self.gui.wait_for_user_message().lower()
             user_nlu_response = self.nlu_classify(user_utterance)
             if not user_nlu_response:
                 print("I did not understand you. Please rephrase your answer.")
+            else:
+                user_entities = user_nlu_response[1]
+                if 'slot_name' in user_entities and user_entities['slot_name'] not in agent_inform_slots:
+                    print("I do not have any information about the slot '{}'. Please rephrase your answer."
+                          .format(user_entities['slot_name']))
+                    user_nlu_response = None
         return user_nlu_response
 
     def evaluate_success(self):
@@ -159,20 +163,25 @@ class User(object):
 
     def nlu_classify(self, utterance):
         regex_entries = []
-        with open(self.nlu_path, encoding="utf-8") as regex_json:
-            patterns_json = json.load(regex_json)
-            for regex_entry in patterns_json['patterns']:
+        with open(self.nlu_path, encoding="utf-8") as regex_nlu_file:
+            regex_nlu = json.load(regex_nlu_file)
+            for regex_entry in regex_nlu['patterns']:
                 regex_entries.append((regex_entry['pattern'], regex_entry['intent'], regex_entry['entities']))
 
         nlu_response = namedtuple("NLU_Response", "intent entities")
 
-        for pattern, intent, entities in regex_entries:
+        slot_translations = dict((k.lower(), v) for k, v in slot_name_translations.items())
+
+        for pattern, intent, entity_keys in regex_entries:
             entity_dict = {}
             if re.match(pattern, utterance):
                 match = re.search(pattern, utterance)
                 groups = match.groups()
                 for i in range(len(groups)):
-                    entity_dict.update({entities[i]: groups[i]})
+                    entity_value = groups[i]
+                    if "slot_name" in entity_keys and entity_value in slot_translations.keys():
+                        entity_value = slot_translations[entity_value]
+                    entity_dict.update({entity_keys[i]: entity_value})
                 return nlu_response(intent, entity_dict)
 
         return None

@@ -1,3 +1,5 @@
+import json
+
 max_round_num = 20
 
 agent_request_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating'
@@ -46,3 +48,6 @@ all_intents = ['inform', 'request', 'thanks', 'match_found', 'accept', 'reject',
 
 # All possible slots (for one-hot conversion in state representation)
 all_slots = sorted(list(set(agent_inform_slots + agent_request_slots)))
+
+# Dictionary containing translations from German to English slot_names
+slot_name_translations = json.load(open("resources/slot_name_translations.json", "r", encoding="utf-8"))
