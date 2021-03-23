@@ -3,12 +3,17 @@
     {
       "pattern": "was ist als (.*) möglich",
       "intent": "request",
-      "entities": ["slot_name"]
+      "entities": [
+        "slot_name"
+      ]
     },
     {
       "pattern": "ich möchte (.*) als (.*)",
       "intent": "inform",
-      "entities": ["slot_value", "slot_name"]
+      "entities": [
+        "slot_value",
+        "slot_name"
+      ]
     },
     {
       "pattern": "danke",

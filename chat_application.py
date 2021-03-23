@@ -1,5 +1,7 @@
 import tkinter as tk
 
+from user.speech_to_text import SpeechToText
+
 GRAY_COLOR = "#ABB2B9"
 DARK_BLUE_COLOR = "#17202A"
 WHITE_COLOR = "#EAECEE"
@@ -13,6 +15,12 @@ class ChatApplication:
         self._setup_main_window()
         self.wait_state = False
         self.last_message = ""
+        self.speech_to_text = SpeechToText(
+            model_file_path=
+            r"C:\Users\alexander.zap\PycharmProjects\task-chatbot\resources\deepspeech-model\german_output_graph.pbmm",
+            scorer_file_path=
+            r"C:\Users\alexander.zap\PycharmProjects\task-chatbot\resources\deepspeech-model\german_kenlm.scorer",
+            beam_width=500, lm_alpha=0.75, lm_beta=1.85)
 
     def _setup_main_window(self):
         self.window.title("Dialogue Agent")
@@ -79,6 +87,19 @@ class ChatApplication:
         self.wait_state = True
         while self.wait_state:
             self.window.update()
+        return self.last_message
+
+    def wait_for_speech_to_text(self):
+        self.speech_to_text.start_speech_to_text()
+
+        self.wait_state = True
+        while self.wait_state:
+            self.window.update()
+            self.msg_entry.delete(0, tk.END)
+            self.msg_entry.insert(0, self.speech_to_text.transcribed_text)
+
+        self.speech_to_text.reset()
+
         return self.last_message
 
     def reset_text_widget(self):
