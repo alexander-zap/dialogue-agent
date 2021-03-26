@@ -1,7 +1,8 @@
-from user.usersim import Usersim
-import random
 import copy
+import random
+
 from dialog_config import no_query_slots, max_round_num
+from user.usersim import Usersim
 from util_functions import reward_function, agent_action_answered_user_request
 
 
@@ -25,15 +26,16 @@ class RulebasedUsersim(Usersim):
         self.user_action.intent = "request"
 
         # Define request slot of start action by sampling one slot from the goal request slots
-        if self.goal['request_slots']:
-            request_slot_set = list(self.goal['request_slots'].keys())
-            # Request slot should not be "ticket", if it is not the only goal request slot
-            if len(request_slot_set) > 1:
-                request_slot_set.remove("ticket")
+        request_slot_set = list(self.goal['request_slots'].keys())
+        # Start action request slot should not be "ticket"
+        if "ticket" in request_slot_set:
+            request_slot_set.remove("ticket")
+        # If other request slots are left in the goal, then sample one randomly
+        if request_slot_set:
             start_request_slot = random.choice(request_slot_set)
             self.request_slots.append(start_request_slot)
+        # If no other request slots are left in the goal, then no request slot is sampled and this is an inform action
         else:
-            # If no request slots are in the goal, then this is an inform action
             self.user_action.intent = 'inform'
 
         # Add inform slot to start action by sampling one slot from the goal inform slots
