@@ -4,7 +4,7 @@ import pickle
 from numpy import mean
 
 from agent.dqn_agent_split_action_nets import DQNAgent
-from chat_application import ChatApplication
+from gui.chat_application import ChatApplication
 from dialog_config import feasible_agent_actions
 from state_tracker import StateTracker
 from user.user_real import User

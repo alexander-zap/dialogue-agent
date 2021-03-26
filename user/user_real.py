@@ -4,7 +4,7 @@ import re
 from collections import namedtuple
 
 from action.useraction import UserAction
-from chat_application import ChatApplication
+from gui.chat_application import ChatApplication
 from dialog_config import max_round_num, agent_inform_slots, slot_name_translations
 from util_functions import reward_function, agent_action_answered_user_request
 
