@@ -39,7 +39,7 @@ def reward_function(success, agent_responsive=None):
         reward -= max_round_num
     elif agent_responsive is not None:
         if agent_responsive:
-            reward += 2
+            reward += 10
         else:
-            reward -= 4
+            reward -= 10
     return reward

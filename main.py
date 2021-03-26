@@ -42,8 +42,7 @@ class Dialogue:
         if load_agent_model_from_directory:
             self.agent.load_agent_model(load_agent_model_from_directory)
 
-    def run(self, n_episodes, step_size=100, success_rate_threshold=0.4,
-            warm_up=False, interactive=False, learning=True):
+    def run(self, n_episodes, step_size=100, warm_up=False, interactive=False, learning=True):
         """
         Runs the loop that trains the agent.
 
@@ -110,17 +109,15 @@ class Dialogue:
 
                 print('Episode: {} SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                            avg_reward))
-                if success_rate > batch_success_best and success_rate > success_rate_threshold \
-                        and not warm_up and learning:
+                if success_rate > batch_success_best and learning and not warm_up:
                     print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
                                                                                         avg_reward))
                     self.agent.save_agent_model()
-                    self.agent.empty_memory()
                     batch_success_best = success_rate
                 batch_successes = []
                 batch_episode_rewards = []
 
-        if not warm_up and learning:
+        if learning and not warm_up:
             # Save final model
             self.agent.save_agent_model()
 
@@ -128,7 +125,7 @@ class Dialogue:
         # 2) Update state tracker with the agent's action
         self.state_tracker.update_state_agent(agent_action)
         if interactive:
-            self.gui.insert_message(agent_action.to_utterance(), "Chatbot")
+            self.gui.insert_message(agent_action.to_utterance(), "Shop Assistant")
         # print(agent_action)
         # 3) User takes action given agent action
         user_action, reward, done, success = self.user.get_action(agent_action)
@@ -150,6 +147,7 @@ class Dialogue:
         # Reset the interactive GUI
         if interactive:
             self.gui.reset_text_widget()
+            self.gui.insert_message("Guten Tag! Wie kann ich Ihnen heute helfen?", "Shop Assistant")
         # User start action
         user_action, _, _, _ = self.user.get_action(None)
         # print(user_action)
@@ -161,4 +159,4 @@ if __name__ == "__main__":
     print("########################\n--- STARTING WARM UP ---\n########################")
     dialogue.run(n_episodes=4000, warm_up=True)
     print("########################\n--- STARTING TRAINING ---\n#########################")
-    dialogue.run(n_episodes=10000, warm_up=False, success_rate_threshold=0.25)
+    dialogue.run(n_episodes=10000, warm_up=False)
