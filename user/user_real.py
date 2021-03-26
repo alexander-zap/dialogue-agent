@@ -46,12 +46,12 @@ class User(object):
         user_started_with_request = False
         while not user_started_with_request:
             nlu_response = self.ask_for_input()
-            if nlu_response.intent == "request":
-                self.user_action.intent = 'request'
+            if nlu_response.intent == "inform" or nlu_response.intent == "request":
+                self.user_action.intent = nlu_response.intent
                 self.request_slots.append(nlu_response.entities["slot_name"])
                 user_started_with_request = True
             else:
-                print("Please start with a request.")
+                print("Please start with an inform or a request.")
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
 
         done = False
