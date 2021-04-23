@@ -27,5 +27,8 @@
   "Beschreibung": "description",
   "Sonstiges": "other",
   "Kinder": "numberofkids",
-  "Anzahl Kinder": "numberofkids"
+  "Anzahl Kinder": "numberofkids",
+  "Personen": "numberofpeople",
+  "Personenzahl": "numberofpeople",
+  "Anzahl Personen": "numberofpeople"
 }

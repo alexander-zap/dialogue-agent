@@ -5,7 +5,7 @@ from collections import namedtuple
 
 from action.useraction import UserAction
 from gui.chat_application import ChatApplication
-from dialog_config import max_round_num, agent_inform_slots, slot_name_translations
+from dialog_config import max_round_num, all_slots, slot_name_translations
 from util_functions import reward_function, agent_action_answered_user_request
 
 
@@ -43,13 +43,16 @@ class User(object):
     def get_start_action(self):
         """ Get start user action based on user input """
 
-        user_started_with_request = False
-        while not user_started_with_request:
+        user_started_correctly = False
+        while not user_started_correctly:
             nlu_response = self.ask_for_input()
-            if nlu_response.intent == "inform" or nlu_response.intent == "request":
-                self.user_action.intent = nlu_response.intent
+            self.user_action.intent = nlu_response.intent
+            if self.user_action.intent == "inform":
+                self.add_inform_to_action(nlu_response.entities["slot_name"], nlu_response.entities["slot_value"])
+                user_started_correctly = True
+            elif self.user_action.intent == "request":
                 self.request_slots.append(nlu_response.entities["slot_name"])
-                user_started_with_request = True
+                user_started_correctly = True
             else:
                 print("Please start with an inform or a request.")
         self.user_action.request_slots = copy.deepcopy(self.request_slots)
@@ -149,7 +152,7 @@ class User(object):
                 print("I did not understand you. Please rephrase your answer.")
             else:
                 user_entities = user_nlu_response[1]
-                if 'slot_name' in user_entities and user_entities['slot_name'] not in agent_inform_slots:
+                if 'slot_name' in user_entities and user_entities['slot_name'] not in all_slots:
                     print("I do not have any information about the slot '{}'. Please rephrase your answer."
                           .format(user_entities['slot_name']))
                     user_nlu_response = None
