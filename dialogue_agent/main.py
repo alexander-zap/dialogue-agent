@@ -7,27 +7,27 @@ from agent import DQNAgentSplit
 from dialog_config import feasible_agent_actions
 from gui.chat_application import ChatApplication
 from state_tracker import StateTracker
-from user import User, RulebasedUsersim
+from user import RulebasedUsersim, User
 
 
 class Dialogue:
 
     def __init__(self, load_agent_model_from_directory: str = None):
         # Load database of movies (if you get an error unpickling movie_db.pkl then run pickle_converter.py)
-        database = pickle.load(open("resources/movie_db.pkl", "rb"), encoding="latin1")
+        database = pickle.load(open("dialogue_agent/resources/movie_db.pkl", "rb"), encoding="latin1")
 
         # Create state tracker
         self.state_tracker = StateTracker(database)
 
         # Create user simulator with list of user goals
         self.user_simulated = RulebasedUsersim(
-            json.load(open("resources/movie_user_goals.json", "r", encoding="utf-8")))
+            json.load(open("dialogue_agent/resources/movie_user_goals.json", "r", encoding="utf-8")))
 
         # Create GUI for direct text interactions
         self.gui = ChatApplication()
 
         # Create user instance for direct text interactions
-        self.user_interactive = User(nlu_path="user/regex_nlu.json", use_voice=False, gui=self.gui)
+        self.user_interactive = User(nlu_path="dialogue_agent/user/regex_nlu.json", use_voice=False, gui=self.gui)
 
         # Create empty user (will be assigned on runtime)
         self.user = None
@@ -52,27 +52,28 @@ class Dialogue:
 
         """
 
-        if interactive:
-            self.user = self.user_interactive
-            self.gui.window.update()
-        else:
-            self.user = self.user_simulated
+        def initialize():
+            if interactive:
+                self.user = self.user_interactive
+                self.gui.window.update()
+            else:
+                self.user = self.user_simulated
 
-        if not learning:
-            self.agent.epsilon = 0.0
+            if not learning:
+                self.agent.epsilon = 0.0
+                self.agent.epsilon_min = 0.0
 
-        batch_episode_rewards = []
-        batch_successes = []
-        batch_success_best = 0.0
-        step_counter = 0
+        def run_episode():
+            nonlocal episode
+            nonlocal step_counter
+            nonlocal batch_successes
+            nonlocal batch_episode_rewards
 
-        for episode in range(n_episodes):
-
-            # print("########################\n------ EPISODE {} ------\n########################".format(episode))
-            self.episode_reset(interactive)
             done = False
             success = False
             episode_reward = 0
+
+            # print("########################\n------ EPISODE {} ------\n########################".format(episode))
 
             # Initialize episode with first user and agent action
             prev_observation = self.state_tracker.get_state()
@@ -94,30 +95,45 @@ class Dialogue:
                 prev_observation = observation
                 prev_agent_action = agent_action
 
-            if not warm_up and learning:
-                self.agent.end_episode(n_episodes)
-
-            # Evaluation
-            # print("--- Episode: {} SUCCESS: {} REWARD: {} ---".format(episode, success, episode_reward))
             batch_episode_rewards.append(episode_reward)
             batch_successes.append(success)
+
+            # print("--- Episode: {} SUCCESS: {} REWARD: {} ---".format(episode, success, episode_reward))
+
+        def evaluate_episode():
+            nonlocal batch_successes
+            nonlocal batch_episode_rewards
+            nonlocal batch_success_best
+
+            # Check success rate
+            success_rate = mean(batch_successes)
+            avg_reward = mean(batch_episode_rewards)
+
+            print('Episode: {} SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
+                                                                       avg_reward))
+            if success_rate > batch_success_best and learning and not warm_up:
+                print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
+                                                                                    avg_reward))
+                self.agent.save_agent_model()
+                batch_success_best = success_rate
+            batch_successes = []
+            batch_episode_rewards = []
+
+        batch_episode_rewards = []
+        batch_successes = []
+        batch_success_best = 0.0
+        step_counter = 0
+        initialize()
+
+        for episode in range(n_episodes):
+            self.episode_reset(interactive)
+            run_episode()
+            self.agent.end_episode(n_episodes)
             if episode % step_size == 0:
-                # Check success rate
-                success_rate = mean(batch_successes)
-                avg_reward = mean(batch_episode_rewards)
+                evaluate_episode()
 
-                print('Episode: {} SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
-                                                                           avg_reward))
-                if success_rate > batch_success_best and learning and not warm_up:
-                    print('Episode: {} NEW BEST SUCCESS RATE: {} Avg Reward: {}'.format(episode, success_rate,
-                                                                                        avg_reward))
-                    self.agent.save_agent_model()
-                    batch_success_best = success_rate
-                batch_successes = []
-                batch_episode_rewards = []
-
+        # Save final model
         if learning and not warm_up:
-            # Save final model
             self.agent.save_agent_model()
 
     def env_step(self, agent_action, interactive=False):

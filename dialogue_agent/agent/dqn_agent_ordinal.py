@@ -3,9 +3,9 @@ from keras.layers import Dense, Input
 from keras.models import Model
 from keras.optimizers import Adam
 
-from agent import Agent
 from dialogue_agent.util_functions import index_to_agent_action
-from memory import PrioritizedReplayMemory
+from .agent import Agent
+from .memory import PrioritizedReplayMemory
 
 
 class DQNAgentOrdinal(Agent):

@@ -1,6 +1,7 @@
-from collections import defaultdict
-from dialog_config import no_query_slots
 import copy
+from collections import defaultdict
+
+from dialog_config import no_query_slots
 
 
 class DBQuery:

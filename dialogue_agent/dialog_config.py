@@ -50,4 +50,4 @@ all_intents = ['inform', 'request', 'thanks', 'match_found', 'accept', 'reject',
 all_slots = sorted(list(set(agent_inform_slots + agent_request_slots)))
 
 # Dictionary containing translations from German to English slot_names
-slot_name_translations = json.load(open("resources/slot_name_translations.json", "r", encoding="utf-8"))
+slot_name_translations = json.load(open("dialogue_agent/resources/slot_name_translations.json", "r", encoding="utf-8"))

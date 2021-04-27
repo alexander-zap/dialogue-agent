@@ -1,7 +1,7 @@
 import random
 
-from agent import Agent
 from dialogue_agent.util_functions import index_to_agent_action
+from .agent import Agent
 
 
 class RandomAgent(Agent):

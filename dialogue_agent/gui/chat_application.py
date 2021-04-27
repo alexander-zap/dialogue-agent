@@ -17,9 +17,9 @@ class ChatApplication:
         self.last_message = ""
         self.speech_to_text = SpeechToText(
             model_file_path=
-            r"C:\Users\alexander.zap\PycharmProjects\task-chatbot\resources\deepspeech-model\german_output_graph.pbmm",
+            r"dialogue_agent/resources/deepspeech-model/german_output_graph.pbmm",
             scorer_file_path=
-            r"C:\Users\alexander.zap\PycharmProjects\task-chatbot\resources\deepspeech-model\german_kenlm.scorer",
+            r"dialogue_agent/resources/deepspeech-model/german_kenlm.scorer",
             beam_width=500, lm_alpha=0.75, lm_beta=1.85)
 
     def _setup_main_window(self):
@@ -29,7 +29,7 @@ class ChatApplication:
         self.window.bind("<Control-f>", self.toggle_fullscreen)
         self.window.bind("<Escape>", self.end_fullscreen)
 
-        background_image = tk.PhotoImage(file=r"gui\resources\webpage.png")
+        background_image = tk.PhotoImage(file=r"dialogue_agent/gui/resources/webpage.png")
         background_label = tk.Label(master=self.window, image=background_image)
         background_label.photo = background_image
         background_label.place(x=0, y=0, relwidth=1, relheight=1)
@@ -40,7 +40,7 @@ class ChatApplication:
 
         chat_assistant_image_frame = tk.Frame(master=nested_frame)
         chat_assistant_image_frame.place(relwidth=0.98, relheight=0.33, relx=0.01, rely=0.01)
-        chat_assistant_image = tk.PhotoImage(file=r"gui/resources/chat_assistant.gif")
+        chat_assistant_image = tk.PhotoImage(file=r"dialogue_agent/gui/resources/chat_assistant.gif")
         chat_assistant_label = tk.Label(master=chat_assistant_image_frame, image=chat_assistant_image)
         chat_assistant_label.photo = chat_assistant_image
         chat_assistant_label.place(x=0, y=0, relwidth=1, relheight=1)

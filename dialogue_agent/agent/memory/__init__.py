@@ -1,1 +1,1 @@
-from memory import PrioritizedReplayMemory, UniformReplayMemory
+from .memory import PrioritizedReplayMemory, UniformReplayMemory

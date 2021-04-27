@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 
 from keras.models import Model
 
-from memory import PrioritizedReplayMemory, UniformReplayMemory
 from dialogue_agent.dialog_config import agent_rule_requests
 from dialogue_agent.util_functions import index_to_agent_action, raw_agent_action_to_index
+from .memory import PrioritizedReplayMemory, UniformReplayMemory
 
 
 class Agent(ABC):
@@ -153,7 +153,7 @@ class Agent(ABC):
         Saves the value function prediction model to resources directory.
         To uniquely identify every model, the file name includes date and time.
         """
-        self.eval_model.save_weights("resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S") + ".h5")
+        self.eval_model.save_weights("dialogue_agent/resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S") + ".h5")
 
     def load_agent_model(self, model_file_path):
         """
