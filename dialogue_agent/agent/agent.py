@@ -4,9 +4,9 @@ from abc import ABC, abstractmethod
 
 from keras.models import Model
 
-from agent.memory.memory import PrioritizedReplayMemory, UniformReplayMemory
-from dialog_config import agent_rule_requests
-from util_functions import index_to_agent_action, raw_agent_action_to_index
+from memory import PrioritizedReplayMemory, UniformReplayMemory
+from dialogue_agent.dialog_config import agent_rule_requests
+from dialogue_agent.util_functions import index_to_agent_action, raw_agent_action_to_index
 
 
 class Agent(ABC):

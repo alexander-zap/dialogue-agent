@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from user.speech_to_text import SpeechToText
+from dialogue_agent.user.speech_to_text import SpeechToText
 
 GRAY_COLOR = "#ABB2B9"
 DARK_BLUE_COLOR = "#17202A"

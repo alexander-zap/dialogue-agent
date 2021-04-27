@@ -1,10 +1,11 @@
 import copy
 import random
+
 import numpy as np
-from dialog_config import all_intents, all_slots, max_round_num
-from action.useraction import UserAction
-from action.agentaction import AgentAction
+
+from action import UserAction, AgentAction
 from db_query import DBQuery
+from dialog_config import all_intents, all_slots, max_round_num
 
 
 class StateTracker:

@@ -3,12 +3,12 @@ from keras.layers import Dense, Input
 from keras.models import Model
 from keras.optimizers import Adam
 
-from agent.agent import Agent
-from agent.memory.memory import PrioritizedReplayMemory
-from util_functions import index_to_agent_action
+from agent import Agent
+from dialogue_agent.util_functions import index_to_agent_action
+from memory import PrioritizedReplayMemory
 
 
-class DQNAgent(Agent):
+class DQNAgentOrdinal(Agent):
     def build_model(self):
         """
         Creates a neural network in order to predict Q-values per action given an observation (Deep Q-Network)

@@ -1,4 +1,4 @@
-from dialog_config import slot_name_translations
+from dialogue_agent.dialog_config import slot_name_translations
 
 
 class AgentAction:

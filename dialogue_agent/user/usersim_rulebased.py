@@ -1,9 +1,9 @@
 import copy
 import random
 
-from dialog_config import no_query_slots, max_round_num
-from user.usersim import Usersim
-from util_functions import reward_function, agent_action_answered_user_request
+from dialogue_agent.dialog_config import no_query_slots, max_round_num
+from dialogue_agent.util_functions import reward_function, agent_action_answered_user_request
+from usersim import Usersim
 
 
 class RulebasedUsersim(Usersim):

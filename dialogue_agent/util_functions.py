@@ -1,6 +1,6 @@
 import copy
 
-from action.agentaction import AgentAction
+from action import AgentAction
 from dialog_config import feasible_agent_actions, max_round_num
 
 

@@ -3,12 +3,11 @@ import pickle
 
 from numpy import mean
 
-from agent.dqn_agent_split_action_nets import DQNAgent
-from gui.chat_application import ChatApplication
+from agent import DQNAgentSplit
 from dialog_config import feasible_agent_actions
+from gui.chat_application import ChatApplication
 from state_tracker import StateTracker
-from user.user_real import User
-from user.usersim_rulebased import RulebasedUsersim
+from user import User, RulebasedUsersim
 
 
 class Dialogue:
@@ -34,11 +33,11 @@ class Dialogue:
         self.user = None
 
         # Create agent
-        self.agent = DQNAgent(alpha=0.001, gamma=0.9, epsilon=0.5, epsilon_min=0.05,
-                              n_actions=len(feasible_agent_actions), n_ordinals=3,
-                              observation_dim=(StateTracker.state_size()),
-                              batch_size=256, memory_len=80000, prioritized_memory=True,
-                              replay_iter=16, replace_target_iter=200)
+        self.agent = DQNAgentSplit(alpha=0.001, gamma=0.9, epsilon=0.5, epsilon_min=0.05,
+                                   n_actions=len(feasible_agent_actions), n_ordinals=3,
+                                   observation_dim=(StateTracker.state_size()),
+                                   batch_size=256, memory_len=80000, prioritized_memory=True,
+                                   replay_iter=16, replace_target_iter=200)
         if load_agent_model_from_directory:
             self.agent.load_agent_model(load_agent_model_from_directory)
 

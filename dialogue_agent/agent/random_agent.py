@@ -1,6 +1,7 @@
-from agent.agent import Agent
-from util_functions import index_to_agent_action
 import random
+
+from agent import Agent
+from dialogue_agent.util_functions import index_to_agent_action
 
 
 class RandomAgent(Agent):

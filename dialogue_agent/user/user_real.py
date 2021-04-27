@@ -3,10 +3,10 @@ import json
 import re
 from collections import namedtuple
 
-from action.useraction import UserAction
-from gui.chat_application import ChatApplication
-from dialog_config import max_round_num, all_slots, slot_name_translations
-from util_functions import reward_function, agent_action_answered_user_request
+from dialogue_agent.action.useraction import UserAction
+from dialogue_agent.gui.chat_application import ChatApplication
+from dialogue_agent.dialog_config import max_round_num, all_slots, slot_name_translations
+from dialogue_agent.util_functions import reward_function, agent_action_answered_user_request
 
 
 class User(object):

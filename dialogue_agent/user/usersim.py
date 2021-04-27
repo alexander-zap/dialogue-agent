@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import random
-from action.useraction import UserAction
+from dialogue_agent.action.useraction import UserAction
 
 
 class Usersim(ABC):
