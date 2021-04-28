@@ -47,7 +47,6 @@ class Dialogue:
 
         Trains the agent on the goal-oriented dialog task (except warm_up, which fills memory with rule-based behavior)
         Training of the agent's neural network occurs every episode that step_size is a multiple of.
-        Replay memory is flushed every time a best success rate is recorded, starting with success_rate_threshold.
         Terminates when the episode reaches n_episodes.
 
         """
