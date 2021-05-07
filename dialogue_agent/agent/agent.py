@@ -1,5 +1,4 @@
 import random
-import time
 from abc import ABC, abstractmethod
 
 from keras.models import Model
@@ -148,12 +147,13 @@ class Agent(ABC):
             self.memory.beta = self.memory.beta + self.memory.beta_anneal_amount / (n_episodes * 0.5) \
                 if self.memory.beta < 1 else self.memory.beta
 
-    def save_agent_model(self):
+    def save_agent_model(self, model_file_path):
         """
         Saves the value function prediction model to resources directory.
         To uniquely identify every model, the file name includes date and time.
+        :param model_file_path: File path where model should be saved to
         """
-        self.eval_model.save_weights("dialogue_agent/resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S") + ".h5")
+        self.eval_model.save_weights(model_file_path)
 
     def load_agent_model(self, model_file_path):
         """
