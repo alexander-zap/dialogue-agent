@@ -5,7 +5,8 @@ from dialogue_agent.locations import RESOURCES_PATH
 
 max_round_num = 20
 
-agent_request_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating',
+# TODO: Missing comma between 'critic_rating' and 'mpaa_rating'
+agent_request_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating'
                        'mpaa_rating', 'distanceconstraints', 'video_format', 'theater_chain', 'price', 'actor',
                        'description', 'other', 'numberofkids', 'numberofpeople']
 
@@ -54,7 +55,7 @@ all_slots = sorted(list(set(agent_inform_slots + agent_request_slots)))
 # Dictionary containing translations from German to English slot_names
 slot_name_translations = json.load(
     open(
-        os.path.join(os.path.dirname(RESOURCES_PATH), "slot_name_translations.json"),
+        os.path.join(RESOURCES_PATH, "slot_name_translations.json"),
         "r", encoding="utf-8"
     )
 )
