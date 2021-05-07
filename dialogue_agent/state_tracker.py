@@ -3,9 +3,9 @@ import random
 
 import numpy as np
 
-from action import UserAction, AgentAction
-from db_query import DBQuery
-from dialog_config import all_intents, all_slots, max_round_num
+from dialogue_agent.action import UserAction, AgentAction
+from dialogue_agent.db_query import DBQuery
+from dialogue_agent.dialog_config import all_intents, all_slots, max_round_num
 
 
 class StateTracker:

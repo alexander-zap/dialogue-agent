@@ -1,8 +1,11 @@
 import json
+import os
+
+from dialogue_agent.locations import RESOURCES_PATH
 
 max_round_num = 20
 
-agent_request_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating'
+agent_request_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating',
                        'mpaa_rating', 'distanceconstraints', 'video_format', 'theater_chain', 'price', 'actor',
                        'description', 'other', 'numberofkids', 'numberofpeople']
 
@@ -10,11 +13,10 @@ agent_inform_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'sta
                       'mpaa_rating', 'distanceconstraints', 'video_format', 'theater_chain', 'price', 'actor',
                       'description', 'other', 'numberofkids', 'ticket']
 
-
 # Possible actions for the agent
 feasible_agent_actions = [
-   {'intent': 'done', 'inform_slots': {}, 'request_slots': []},  # Triggers closing of conversation
-   {'intent': 'match_found', 'inform_slots': {}, 'request_slots': []}  # Signals a found match for a ticket
+    {'intent': 'done', 'inform_slots': {}, 'request_slots': []},  # Triggers closing of conversation
+    {'intent': 'match_found', 'inform_slots': {}, 'request_slots': []}  # Signals a found match for a ticket
 ]
 
 # Add inform slots
@@ -50,4 +52,9 @@ all_intents = ['inform', 'request', 'thanks', 'match_found', 'accept', 'reject',
 all_slots = sorted(list(set(agent_inform_slots + agent_request_slots)))
 
 # Dictionary containing translations from German to English slot_names
-slot_name_translations = json.load(open("dialogue_agent/resources/slot_name_translations.json", "r", encoding="utf-8"))
+slot_name_translations = json.load(
+    open(
+        os.path.join(os.path.dirname(RESOURCES_PATH), "slot_name_translations.json"),
+        "r", encoding="utf-8"
+    )
+)

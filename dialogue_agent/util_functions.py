@@ -1,7 +1,7 @@
 import copy
 
-from action import AgentAction
-from dialog_config import feasible_agent_actions, max_round_num
+from dialogue_agent.action import AgentAction
+from dialogue_agent.dialog_config import feasible_agent_actions, max_round_num
 
 
 def index_to_agent_action(index):
