@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 from keras.models import Model
 
-from dialogue_agent.dialog_config import agent_rule_requests
+import dialogue_agent.dialog_config as dia_config
 from dialogue_agent.util_functions import index_to_agent_action, raw_agent_action_to_index
 from .memory import PrioritizedReplayMemory, UniformReplayMemory
 
@@ -108,6 +108,7 @@ class Agent(ABC):
 
         :return action : AgentAction which should be chosen next by the agent
         """
+        agent_rule_requests = dia_config.config.agent_rule_requests
         # Agents' request sequence is defined in agent_rule_requests
         if self.turn < len(agent_rule_requests):
             raw_action = agent_rule_requests[self.turn]

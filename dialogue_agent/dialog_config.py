@@ -1,61 +1,47 @@
 import json
-import os
 
-from dialogue_agent.locations import RESOURCES_PATH
 
-max_round_num = 20
+class DialogConfig:
+    def __init__(self, config_file_path=None):
+        if config_file_path:
+            with open(config_file_path, 'r') as f:
+                config_json = json.load(f)
+        else:
+            config_json = None
 
-# TODO: Missing comma between 'critic_rating' and 'mpaa_rating'
-agent_request_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating'
-                       'mpaa_rating', 'distanceconstraints', 'video_format', 'theater_chain', 'price', 'actor',
-                       'description', 'other', 'numberofkids', 'numberofpeople']
+        self.max_round_num = config_json['max_round_num'] if config_json else 0
+        self.agent_request_slots = config_json['agent_request_slots'] if config_json else []
+        self.agent_inform_slots = config_json['agent_inform_slots'] if config_json else []
+        self.no_query_slots = config_json['no_query_slots'] if config_json else []
+        self.all_intents = config_json['all_intents'] if config_json else []
+        self.agent_rule_requests = config_json['agent_rule_requests'] if config_json else []
+        self.slot_name_translations = config_json['slot_name_translations'] if config_json else {}
 
-agent_inform_slots = ['moviename', 'theater', 'starttime', 'date', 'genre', 'state', 'city', 'zip', 'critic_rating',
-                      'mpaa_rating', 'distanceconstraints', 'video_format', 'theater_chain', 'price', 'actor',
-                      'description', 'other', 'numberofkids', 'ticket']
+        self.all_slots = sorted(list(set(self.agent_inform_slots + self.agent_request_slots)))
 
-# Possible actions for the agent
-feasible_agent_actions = [
-    {'intent': 'done', 'inform_slots': {}, 'request_slots': []},  # Triggers closing of conversation
-    {'intent': 'match_found', 'inform_slots': {}, 'request_slots': []}  # Signals a found match for a ticket
-]
+        # Possible actions for the agent
+        self.feasible_agent_actions = [
+            {'intent': 'done', 'inform_slots': {}, 'request_slots': []},  # Triggers closing of conversation
+            {'intent': 'match_found', 'inform_slots': {}, 'request_slots': []}  # Signals a found match for a ticket
+        ]
 
-# Add inform slots
-for slot in agent_inform_slots:
-    if slot != 'ticket':
-        feasible_agent_actions.append({'intent': 'inform',
-                                       'inform_slots': {slot: "PLACEHOLDER"},
-                                       'request_slots': []})
+        # Add inform slots
+        for slot in self.agent_inform_slots:
+            if slot != 'ticket':
+                self.feasible_agent_actions.append({'intent': 'inform',
+                                                    'inform_slots': {slot: "PLACEHOLDER"},
+                                                    'request_slots': []})
 
-# Add request slots
-for slot in agent_request_slots:
-    feasible_agent_actions.append({'intent': 'request',
-                                   'inform_slots': {},
-                                   'request_slots': [slot]})
+        # Add request slots
+        for slot in self.agent_request_slots:
+            self.feasible_agent_actions.append({'intent': 'request',
+                                                'inform_slots': {},
+                                                'request_slots': [slot]})
 
-# These are possible inform slot keys that cannot be used to check current_inform_slots
-no_query_slots = ['numberofpeople', 'ticket']
 
-# Action order for agents warm-up phase (must be part of feasible_agent_actions)
-agent_rule_requests = [{'intent': 'request', 'inform_slots': {}, 'request_slots': ['moviename']},
-                       {'intent': 'request', 'inform_slots': {}, 'request_slots': ['starttime']},
-                       {'intent': 'request', 'inform_slots': {}, 'request_slots': ['city']},
-                       {'intent': 'request', 'inform_slots': {}, 'request_slots': ['date']},
-                       {'intent': 'request', 'inform_slots': {}, 'request_slots': ['theater']},
-                       {'intent': 'request', 'inform_slots': {}, 'request_slots': ['numberofpeople']},
-                       {'intent': 'match_found', 'inform_slots': {}, 'request_slots': []},
-                       {'intent': 'done', 'inform_slots': {}, 'request_slots': []}]
+def init_config(config_file_path):
+    global config
+    config = DialogConfig(config_file_path)
 
-# All possible intents (for one-hot conversion in state representation)
-all_intents = ['inform', 'request', 'thanks', 'match_found', 'accept', 'reject', 'done']
 
-# All possible slots (for one-hot conversion in state representation)
-all_slots = sorted(list(set(agent_inform_slots + agent_request_slots)))
-
-# Dictionary containing translations from German to English slot_names
-slot_name_translations = json.load(
-    open(
-        os.path.join(RESOURCES_PATH, "slot_name_translations.json"),
-        "r", encoding="utf-8"
-    )
-)
+config = DialogConfig()

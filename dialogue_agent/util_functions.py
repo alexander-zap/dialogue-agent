@@ -1,11 +1,11 @@
 import copy
 
+import dialogue_agent.dialog_config as dia_config
 from dialogue_agent.action import AgentAction
-from dialogue_agent.dialog_config import feasible_agent_actions, max_round_num
 
 
 def index_to_agent_action(index):
-    agent_action_raw = copy.deepcopy(feasible_agent_actions[index])
+    agent_action_raw = copy.deepcopy(dia_config.config.feasible_agent_actions[index])
     agent_action = AgentAction()
     agent_action.intent = agent_action_raw['intent']
     agent_action.inform_slots = agent_action_raw['inform_slots']
@@ -15,7 +15,7 @@ def index_to_agent_action(index):
 
 
 def raw_agent_action_to_index(raw_agent_action):
-    feasible_agent_action_index = feasible_agent_actions.index(raw_agent_action)
+    feasible_agent_action_index = dia_config.config.feasible_agent_actions.index(raw_agent_action)
     return feasible_agent_action_index
 
 
@@ -34,9 +34,9 @@ def agent_action_answered_user_request(user_request_slots=None, agent_action=Non
 def reward_function(success, agent_responsive=None):
     reward = -1
     if success == 1:
-        reward += 2 * max_round_num
+        reward += 2 * dia_config.config.max_round_num
     elif success == -1:
-        reward -= max_round_num
+        reward -= dia_config.config.max_round_num
     elif agent_responsive is not None:
         if agent_responsive:
             reward += 8
