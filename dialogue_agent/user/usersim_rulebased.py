@@ -1,7 +1,7 @@
 import copy
 import random
 
-from dialogue_agent.dialog_config import no_query_slots, max_round_num
+import dialogue_agent.dialog_config as dia_config
 from dialogue_agent.util_functions import reward_function, agent_action_answered_user_request
 from .usersim import Usersim
 
@@ -58,7 +58,7 @@ class RulebasedUsersim(Usersim):
         success = 0
 
         # End episode if turn maximum is reached or if agent is done
-        if self.turn >= max_round_num:
+        if self.turn >= dia_config.config.max_round_num:
             done = True
             success = -1
             self.user_action.intent = 'done'
@@ -188,7 +188,7 @@ class RulebasedUsersim(Usersim):
         # 2) All goal inform slots must be in agent action and all slot values must be the same
         for slot, value in self.goal['inform_slots'].items():
             # No query indicates slots that cannot be in a ticket so they should not be checked
-            if slot in no_query_slots:
+            if slot in dia_config.config.no_query_slots:
                 continue
             if value != agent_action.inform_slots.get(slot, None):
                 self.constraint_check = False

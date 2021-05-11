@@ -1,7 +1,7 @@
 import copy
 from collections import defaultdict
 
-from dialogue_agent.dialog_config import no_query_slots
+import dialogue_agent.dialog_config as dia_config
 
 
 class DBQuery:
@@ -20,7 +20,7 @@ class DBQuery:
         self.cached_db_slot = defaultdict(dict)
         # {frozenset: {'#': {'slot': 'value'}}} A dict of dicts of dicts, a dict of DB sub-dicts
         self.cached_db = defaultdict(dict)
-        self.no_query = no_query_slots
+        self.no_query = dia_config.config.no_query_slots
         self.match_key = 'ticket'
 
     def get_matching_db_entries(self, current_inform_slots):

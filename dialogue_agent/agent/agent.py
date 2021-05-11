@@ -1,10 +1,9 @@
 import random
-import time
 from abc import ABC, abstractmethod
 
 from keras.models import Model
 
-from dialogue_agent.dialog_config import agent_rule_requests
+import dialogue_agent.dialog_config as dia_config
 from dialogue_agent.util_functions import index_to_agent_action, raw_agent_action_to_index
 from .memory import PrioritizedReplayMemory, UniformReplayMemory
 
@@ -109,6 +108,7 @@ class Agent(ABC):
 
         :return action : AgentAction which should be chosen next by the agent
         """
+        agent_rule_requests = dia_config.config.agent_rule_requests
         # Agents' request sequence is defined in agent_rule_requests
         if self.turn < len(agent_rule_requests):
             raw_action = agent_rule_requests[self.turn]
@@ -148,12 +148,13 @@ class Agent(ABC):
             self.memory.beta = self.memory.beta + self.memory.beta_anneal_amount / (n_episodes * 0.5) \
                 if self.memory.beta < 1 else self.memory.beta
 
-    def save_agent_model(self):
+    def save_agent_model(self, model_file_path):
         """
         Saves the value function prediction model to resources directory.
         To uniquely identify every model, the file name includes date and time.
+        :param model_file_path: File path where model should be saved to
         """
-        self.eval_model.save_weights("dialogue_agent/resources/agent_models/" + time.strftime("%Y%m%d-%H%M%S") + ".h5")
+        self.eval_model.save_weights(model_file_path)
 
     def load_agent_model(self, model_file_path):
         """

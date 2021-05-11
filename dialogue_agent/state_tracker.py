@@ -3,9 +3,9 @@ import random
 
 import numpy as np
 
+import dialogue_agent.dialog_config as dia_config
 from dialogue_agent.action import UserAction, AgentAction
 from dialogue_agent.db_query import DBQuery
-from dialogue_agent.dialog_config import all_intents, all_slots, max_round_num
 
 
 class StateTracker:
@@ -64,6 +64,10 @@ class StateTracker:
         self.history.append(user_action)
 
     def get_state(self, done=False):
+        all_intents = dia_config.config.all_intents
+        all_slots = dia_config.config.all_slots
+        max_round_num = dia_config.config.max_round_num
+
         # If done then fill state with zeros
         if done:
             return np.zeros(self.state_size())
@@ -144,4 +148,5 @@ class StateTracker:
 
     @staticmethod
     def state_size():
-        return 2 * len(all_intents) + 7 * len(all_slots) + 3 + max_round_num
+        return 2 * len(dia_config.config.all_intents) + 7 * len(dia_config.config.all_slots) + \
+               3 + dia_config.config.max_round_num
