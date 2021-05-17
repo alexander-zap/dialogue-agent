@@ -12,6 +12,7 @@ class DialogConfig:
         self.max_round_num = config_json['max_round_num'] if config_json else 0
         self.agent_request_slots = config_json['agent_request_slots'] if config_json else []
         self.agent_inform_slots = config_json['agent_inform_slots'] if config_json else []
+        self.default_start_slot = config_json['default_start_slot'] if config_json else []
         self.no_query_slots = config_json['no_query_slots'] if config_json else []
         self.all_intents = config_json['all_intents'] if config_json else []
         self.agent_rule_requests = config_json['agent_rule_requests'] if config_json else []
