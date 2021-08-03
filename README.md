@@ -63,8 +63,12 @@ Training data is generated from a simulated or real interaction with a user, wit
 
 ## Installation
 1. Clone this repository
-2. Install all required Python packages from the requirements.txt
-3. Execute the main.py-file to start the showcase. The showcase consists of training an agent in the use case of movie-booking.
+2. Import this module into your project by navigating to the repository and executing `pip install -e .`
+3. Install all required Python packages from requirements.txt
+
+An example on how to train and use the dialogue agent can be found in the sample chatbot project at https://github.com/alexander-zap/task-chatbot
+- All requests to the dialogue agent can be seen in the main.py
+- Execute the main.py to start a showcase consisting of training and using an agent in the use case of movie-booking
 
 
 ## Technologies
